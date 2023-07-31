@@ -1,27 +1,21 @@
 #define STB_IMAGE_IMPLEMENTATION
-#define GLFW_INCLUDE_VULKAN
 
 #include <iostream>
-#include <GLFW/glfw3.h>
 
-GLFWwindow* gWindow;
+#include "WindowWrapper.h"
 
 int main() {
+	try {
+		WindowWrapper gWindow;
 
-	glfwInit();
+		while (!glfwWindowShouldClose(gWindow.GetWindow())) {
+			glfwPollEvents();
+		}
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-	gWindow = glfwCreateWindow(800, 600, "Nocturne Renderer", nullptr, nullptr);
-
-	while (!glfwWindowShouldClose(gWindow)) {
-		glfwPollEvents();
+	} catch (const std::runtime_error& e) {
+		std::cout << "Nocturne Error: " << e.what() << std::endl;
+		return EXIT_FAILURE;
 	}
 
-	glfwDestroyWindow(gWindow);
-
-	glfwTerminate();
-
-	return 0;
+	return EXIT_SUCCESS;
 }
