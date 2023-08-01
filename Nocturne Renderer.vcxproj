@@ -139,6 +139,7 @@
   <ItemGroup>
     <ClCompile Include="InstanceWrapper.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PhysicalDeviceWrapper.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="WindowWrapper.cpp" />
   </ItemGroup>
@@ -146,6 +147,7 @@
     <ClInclude Include="globals.h" />
     <ClInclude Include="InstanceWrapper.h" />
     <ClInclude Include="Libraries\stb_image.h" />
+    <ClInclude Include="PhysicalDeviceWrapper.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="WindowWrapper.h" />
   </ItemGroup>
