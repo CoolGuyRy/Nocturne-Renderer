@@ -1,4 +1,5 @@
-#pragma once
+#ifndef WINDOW_WRAPPER_H
+#define WINDOW_WRAPPER_H
 
 #include <GLFW/glfw3.h>
 
@@ -18,3 +19,4 @@ public:
 private:
 	GLFWwindow* mWindow;
 };
+#endif
