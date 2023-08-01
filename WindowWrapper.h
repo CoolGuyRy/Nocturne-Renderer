@@ -12,7 +12,6 @@ class WindowWrapper {
 public:
 	WindowWrapper();
 	WindowWrapper(std::vector<std::pair<int, int>>&);
-	
 	~WindowWrapper();
 
 	GLFWwindow* GetWindow();

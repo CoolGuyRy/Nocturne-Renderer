@@ -35,7 +35,9 @@ void InstanceWrapper::CreateInstance() {
 	}
 
 	// Add any extra requested Instance Level Extensions here
-
+	for (size_t i = 0; i < ENABLED_INSTANCE_EXTENSIONS.size(); i++) {
+		mExtensions.push_back(ENABLED_INSTANCE_EXTENSIONS.at(i));
+	}
 
 	// Check if requested Instance Level Extensions are supported
 	if (!checkInstanceExtensionSupport()) {

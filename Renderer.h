@@ -8,6 +8,7 @@
 
 #include "InstanceWrapper.h"
 #include "PhysicalDeviceWrapper.h"
+#include "LogicalDeviceWrapper.h"
 
 class Renderer {
 public:
@@ -16,6 +17,7 @@ public:
 private:
 	InstanceWrapper* mInstance;
 	PhysicalDeviceWrapper* mPhysicalDevice;
+	LogicalDeviceWrapper* mLogicalDevice;
 };
 
 #endif
