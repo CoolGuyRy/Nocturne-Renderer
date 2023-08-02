@@ -8,12 +8,18 @@
 class SurfaceWrapper;
 class PhysicalDeviceWrapper;
 class LogicalDeviceWrapper;
+class ImageViewWrapper;
 
 /*
 
 	
 
 */
+
+struct SwapchainImage {
+	VkImage mImage;
+	ImageViewWrapper* mImageView;
+};
 
 class SwapchainWrapper {
 public:
@@ -23,9 +29,7 @@ private:
 	void CreateSwapchain();
 
 	VkSwapchainKHR mSwapchain;
-	std::vector<VkSurfaceCapabilitiesKHR> mSurfaceCapabilities;
-	std::vector<VkSurfaceFormatKHR> mSurfaceFormats;
-	std::vector<VkPresentModeKHR> mPresentModes;
+	std::vector<SwapchainImage> mSwapchainImages;
 
 	PhysicalDeviceWrapper* mPhysicalDevice;
 	LogicalDeviceWrapper* mLogicalDevice;

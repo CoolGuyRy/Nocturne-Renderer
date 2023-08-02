@@ -3,16 +3,24 @@
 #include "SurfaceWrapper.h"
 #include "PhysicalDeviceWrapper.h"
 #include "LogicalDeviceWrapper.h"
+#include "ImageViewWrapper.h"
 
 SwapchainWrapper::SwapchainWrapper(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrapper* lDevice, SurfaceWrapper* surface) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice), mSurface(surface) {
 	CreateSwapchain();
 }
 
 SwapchainWrapper::~SwapchainWrapper() {
+	for (size_t i = 0; i < mSwapchainImages.size(); i++) {
+		vkDestroyImageView(mLogicalDevice->GetLogicalDevice(), mSwapchainImages.at(i).mImageView->GetImageView(), nullptr);
+		std::cout << "Success: Image View destroyed." << std::endl;
+	}
 	vkDestroySwapchainKHR(mLogicalDevice->GetLogicalDevice(), mSwapchain, nullptr); std:: cout << "Success: Swapchain destroyed." << std::endl;
 }
 
 void SwapchainWrapper::CreateSwapchain() {
+	// Ask Surface to Provide Swapchain Details
+	mSurface->AcquireSurfaceProperties(mPhysicalDevice->GetPhysicalDevice());
+
 	// Describe the swapchain
 	VkSwapchainCreateInfoKHR swapchainCI = {
 		VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,					// sType
@@ -20,8 +28,8 @@ void SwapchainWrapper::CreateSwapchain() {
 		0,																// flags
 		mSurface->GetSurface(),											// surface
 		3,																// minImageCount
-		VK_FORMAT_B8G8R8A8_UNORM,										// imageFormat
-		VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,								// imageColorSpace
+		mSurface->GetBestSurfaceFormat().format,						// imageFormat
+		mSurface->GetBestSurfaceFormat().colorSpace,					// imageColorSpace
 		{ WINDOW_WIDTH, WINDOW_HEIGHT },								// imageExtent
 		1,																// imageArrayLayers
 		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,							// imageUsage
@@ -30,7 +38,7 @@ void SwapchainWrapper::CreateSwapchain() {
 		nullptr,														// pQueueFamilyIndices
 		VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,							// preTransform
 		VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,								// compositeAlpha
-		VK_PRESENT_MODE_FIFO_KHR,										// presentMode
+		mSurface->GetBestPresentMode(),									// presentMode
 		VK_TRUE,														// clipped
 		VK_NULL_HANDLE													// oldSwapchain
 	};
@@ -54,5 +62,16 @@ void SwapchainWrapper::CreateSwapchain() {
 		std::cout << "Success: Swapchain created." << std::endl;
 	} else {
 		throw std::runtime_error("Failed to create swapchain!");
+	}
+
+	// Grab the Swapchain Images
+	uint32_t swapchainImagesCount = 0;
+	vkGetSwapchainImagesKHR(mLogicalDevice->GetLogicalDevice(), mSwapchain, &swapchainImagesCount, nullptr);
+	std::vector<VkImage> swapchainImages(swapchainImagesCount);
+	vkGetSwapchainImagesKHR(mLogicalDevice->GetLogicalDevice(), mSwapchain, &swapchainImagesCount, swapchainImages.data());
+
+	// Create ImageViews for each Swapchain Image and push to mSwapchainImages vector
+	for (size_t i = 0; i < swapchainImages.size(); i++) {
+		mSwapchainImages.push_back({swapchainImages.at(i), new ImageViewWrapper(mLogicalDevice, swapchainImages.at(i), mSurface->GetBestSurfaceFormat().format, VK_IMAGE_ASPECT_COLOR_BIT) });
 	}
 }

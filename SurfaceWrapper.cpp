@@ -15,16 +15,16 @@ VkSurfaceKHR SurfaceWrapper::GetSurface() {
 	return mSurface;
 }
 
-const VkSurfaceCapabilitiesKHR& SurfaceWrapper::GetAvailableSurfaceCapabilities() {
+const VkSurfaceCapabilitiesKHR& SurfaceWrapper::GetSurfaceCapabilities() {
 	return mSurfaceCapabilities;
 }
 
-const std::vector<VkSurfaceFormatKHR>& SurfaceWrapper::GetAvailableSurfaceFormats() {
-	return mAvailableSurfaceFormats;
+const VkSurfaceFormatKHR& SurfaceWrapper::GetBestSurfaceFormat() {
+	return mBestSurfaceFormat;
 }
 
-const std::vector<VkPresentModeKHR>& SurfaceWrapper::GetAvailablePresentModes() {
-	return mAvailablePresentModes;
+const VkPresentModeKHR& SurfaceWrapper::GetBestPresentMode() {
+	return mBestPresentMode;
 }
 
 void SurfaceWrapper::CreateSurface() {
@@ -35,6 +35,14 @@ void SurfaceWrapper::CreateSurface() {
 	} else {
 		throw std::runtime_error("Failed to create surface! Error Code: " + NT_CHECK_RESULT(result));
 	}
+}
+
+VkSurfaceFormatKHR SurfaceWrapper::ChooseBestSurfaceFormat() {
+	return mAvailableSurfaceFormats.at(0);
+}
+
+VkPresentModeKHR SurfaceWrapper::ChooseBestPresentMode() {
+	return VK_PRESENT_MODE_MAILBOX_KHR;
 }
 
 void SurfaceWrapper::AcquireSurfaceProperties(VkPhysicalDevice pDevice) {
@@ -52,4 +60,7 @@ void SurfaceWrapper::AcquireSurfaceProperties(VkPhysicalDevice pDevice) {
 	vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, mSurface, &presentModeCount, nullptr);
 	mAvailablePresentModes.resize(presentModeCount);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(pDevice, mSurface, &presentModeCount, mAvailablePresentModes.data());
+
+	mBestSurfaceFormat = ChooseBestSurfaceFormat();
+	mBestPresentMode = ChooseBestPresentMode();
 }

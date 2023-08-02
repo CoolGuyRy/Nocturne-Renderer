@@ -137,6 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ImageViewWrapper.cpp" />
     <ClCompile Include="InstanceWrapper.cpp" />
     <ClCompile Include="LogicalDeviceWrapper.cpp" />
     <ClCompile Include="main.cpp" />
@@ -148,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.h" />
+    <ClInclude Include="ImageViewWrapper.h" />
     <ClInclude Include="InstanceWrapper.h" />
     <ClInclude Include="Libraries\stb_image.h" />
     <ClInclude Include="LogicalDeviceWrapper.h" />
