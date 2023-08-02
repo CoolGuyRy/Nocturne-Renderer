@@ -142,6 +142,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PhysicalDeviceWrapper.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="SurfaceWrapper.cpp" />
+    <ClCompile Include="SwapchainWrapper.cpp" />
     <ClCompile Include="WindowWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -151,6 +153,8 @@
     <ClInclude Include="LogicalDeviceWrapper.h" />
     <ClInclude Include="PhysicalDeviceWrapper.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="SurfaceWrapper.h" />
+    <ClInclude Include="SwapchainWrapper.h" />
     <ClInclude Include="WindowWrapper.h" />
   </ItemGroup>
   <ItemGroup>

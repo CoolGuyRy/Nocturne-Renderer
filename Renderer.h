@@ -6,18 +6,23 @@
 
 #include <iostream>
 
-#include "InstanceWrapper.h"
-#include "PhysicalDeviceWrapper.h"
-#include "LogicalDeviceWrapper.h"
+class WindowWrapper;
+class InstanceWrapper;
+class SurfaceWrapper;
+class PhysicalDeviceWrapper;
+class LogicalDeviceWrapper;
+class SwapchainWrapper;
 
 class Renderer {
 public:
-	Renderer();
+	Renderer(WindowWrapper*);
 	~Renderer();
 private:
+	WindowWrapper* mWindow;
 	InstanceWrapper* mInstance;
+	SurfaceWrapper* mSurface;
 	PhysicalDeviceWrapper* mPhysicalDevice;
 	LogicalDeviceWrapper* mLogicalDevice;
+	SwapchainWrapper* mSwapchain;
 };
-
 #endif

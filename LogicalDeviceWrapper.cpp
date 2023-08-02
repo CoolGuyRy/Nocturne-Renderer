@@ -1,11 +1,13 @@
 #include "LogicalDeviceWrapper.h"
+#include "globals.h"
+#include "PhysicalDeviceWrapper.h"
 
 LogicalDeviceWrapper::LogicalDeviceWrapper(PhysicalDeviceWrapper* pDevice) : mPhysicalDevice(pDevice) {
 	CreateLogicalDevice();
 }
 
 LogicalDeviceWrapper::~LogicalDeviceWrapper() {
-	vkDestroyDevice(mLogicalDevice, nullptr); std::cout << "Success: Logical Device Destroyed." << std::endl;
+	vkDestroyDevice(mLogicalDevice, nullptr); std::cout << "Success: Logical Device destroyed." << std::endl;
 }
 
 VkDevice LogicalDeviceWrapper::GetLogicalDevice() {
@@ -16,41 +18,68 @@ VkQueue LogicalDeviceWrapper::GetGraphicsQueue() {
 	return mGraphicsQueue;
 }
 
+VkQueue LogicalDeviceWrapper::GetPresentQueue() {
+	return mPresentQueue;
+}
+
 void LogicalDeviceWrapper::CreateLogicalDevice() {
 	// Describe the queues to be created on the logical device
 	float queuePriority = 1.0f;
-	VkDeviceQueueCreateInfo queueCI = { 
-		VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,				// sType
-		nullptr,												// pNext
-		0,														// flags
-		mPhysicalDevice->GetQueueFamilyIndices().mGraphics,		// queueFamilyIndex
-		1,														// queueCount
-		&queuePriority											// pQueuePriorities
+	VkDeviceQueueCreateInfo graphicsQueueCI = { 
+		VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,							// sType
+		nullptr,															// pNext
+		0,																	// flags
+		(uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mGraphics,		// queueFamilyIndex
+		1,																	// queueCount
+		&queuePriority														// pQueuePriorities
+	};
+	VkDeviceQueueCreateInfo presentQueueCI = {
+		VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,							// sType
+		nullptr,															// pNext
+		0,																	// flags
+		(uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mPresent,		// queueFamilyIndex
+		1,																	// queueCount
+		&queuePriority														// pQueuePriorities
 	};
 
+	// Create an array to pass to deviceCI
+	std::vector<VkDeviceQueueCreateInfo> queueCIs = { graphicsQueueCI };
+	
+	// Check if the present queue is the same as the graphics queue
+	if (mPhysicalDevice->GetQueueFamilyIndices().mGraphics != mPhysicalDevice->GetQueueFamilyIndices().mPresent) {
+		queueCIs.push_back(presentQueueCI);
+	}
+
+	// Check if the logical device supports all required extensions
 	if (!CheckDeviceExtensionSupport()) {
 		throw std::runtime_error("Failed to create a Logical Device that supports all required extensions!");
 	}
 
+	// Describe the logical device to be created
 	VkDeviceCreateInfo deviceCI = { 
-		VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,					// sType
-		nullptr,												// pNext
-		0,														// flags
-		1,														// queueCreateInfoCount
-		&queueCI,												// pQueueCreateInfos
-		0,														// enabledLayerCount (Deprecated)
-		nullptr,												// ppEnabledLayerNames (Deprecated)
-		(uint32_t)ENABLED_LOGICAL_DEVICE_EXTENSIONS.size(),		// enabledExtensionCount
-		ENABLED_LOGICAL_DEVICE_EXTENSIONS.data(),				// ppEnabledExtensionNames
-		&ENABLED_PHYSICAL_DEVICE_FEATURES						// pEnabledFeatures
+		VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,								// sType
+		nullptr,															// pNext
+		0,																	// flags
+		(uint32_t)queueCIs.size(),											// queueCreateInfoCount
+		queueCIs.data(),													// pQueueCreateInfos
+		0,																	// enabledLayerCount (Deprecated)
+		nullptr,															// ppEnabledLayerNames (Deprecated)
+		(uint32_t)ENABLED_LOGICAL_DEVICE_EXTENSIONS.size(),					// enabledExtensionCount
+		ENABLED_LOGICAL_DEVICE_EXTENSIONS.data(),							// ppEnabledExtensionNames
+		&ENABLED_PHYSICAL_DEVICE_FEATURES									// pEnabledFeatures
 	};
 
+	// Create the logical device
 	VkResult result = vkCreateDevice(mPhysicalDevice->GetPhysicalDevice(), &deviceCI, nullptr, &mLogicalDevice);
 	if (result == VK_SUCCESS) {
-		std::cout << "Success: Logical Device Created." << std::endl;
+		std::cout << "Success: Logical Device created." << std::endl;
 	} else {
 		throw std::runtime_error("Failed to create a Logical Device! Error Code: " + NT_CHECK_RESULT(result)); // not tested
 	}
+
+	// Get the created queue handles
+	vkGetDeviceQueue(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mGraphics, 0, &mGraphicsQueue);
+	vkGetDeviceQueue(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mPresent, 0, &mPresentQueue);
 }
 
 /*
@@ -68,7 +97,7 @@ bool LogicalDeviceWrapper::CheckDeviceExtensionSupport() {
 	for (size_t i = 0; i < ENABLED_LOGICAL_DEVICE_EXTENSIONS.size(); i++) {
 		bool found = false;
 		for (uint32_t j = 0; j < availableExtensions.size(); j++) {
-			if (strcmp(ENABLED_VALIDATION_LAYERS.at(i), availableExtensions.at(j).extensionName) == 0) {
+			if (strcmp(ENABLED_LOGICAL_DEVICE_EXTENSIONS.at(i), availableExtensions.at(j).extensionName) == 0) {
 				found = true;
 				break;
 			}

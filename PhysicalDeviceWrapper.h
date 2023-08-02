@@ -5,9 +5,8 @@
 #include <iostream>
 #include <vector>
 
-#include "globals.h"
-
-#include "InstanceWrapper.h"
+class InstanceWrapper;
+class SurfaceWrapper;
 
 /*
 
@@ -26,7 +25,7 @@ struct QueueFamilyIndices {
 
 class PhysicalDeviceWrapper {
 public:
-	PhysicalDeviceWrapper(InstanceWrapper*);
+	PhysicalDeviceWrapper(InstanceWrapper*, SurfaceWrapper*);
 	~PhysicalDeviceWrapper();
 
 	VkPhysicalDevice GetPhysicalDevice();
@@ -35,7 +34,7 @@ public:
 	VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures();
 	VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties();
 
-	QueueFamilyIndices GetQueueFamilyIndices();
+	QueueFamilyIndices& GetQueueFamilyIndices();
 private:
 	void RetrievePhysicalDevice();
 
@@ -43,12 +42,15 @@ private:
 	bool CheckDeviceExtensionSupport(VkPhysicalDevice);
 	
 	void AssignQueueFamilyIndices();
+	void ValidateQueueFamilyIndices();
 
-	InstanceWrapper* mInstance;
 	VkPhysicalDevice mPhysicalDevice;
 	VkPhysicalDeviceProperties mPhysicalDeviceProperties;
 	VkPhysicalDeviceFeatures mPhysicalDeviceFeatures;
 	VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemoryProperties;
 	QueueFamilyIndices mQueueFamilyIndices;
+
+	InstanceWrapper* mInstance;
+	SurfaceWrapper* mSurface;
 };
 #endif

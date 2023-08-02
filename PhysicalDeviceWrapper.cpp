@@ -1,6 +1,9 @@
 #include "PhysicalDeviceWrapper.h"
+#include "globals.h"
+#include "InstanceWrapper.h"
+#include "SurfaceWrapper.h"
 
-PhysicalDeviceWrapper::PhysicalDeviceWrapper(InstanceWrapper* instance) : mInstance(instance) {
+PhysicalDeviceWrapper::PhysicalDeviceWrapper(InstanceWrapper* instance, SurfaceWrapper* surface) : mInstance(instance), mSurface(surface) {
 	RetrievePhysicalDevice();
 }
 
@@ -23,7 +26,7 @@ VkPhysicalDeviceMemoryProperties PhysicalDeviceWrapper::GetPhysicalDeviceMemoryP
 	return mPhysicalDeviceMemoryProperties;
 }
 
-QueueFamilyIndices PhysicalDeviceWrapper::GetQueueFamilyIndices() {
+QueueFamilyIndices& PhysicalDeviceWrapper::GetQueueFamilyIndices() {
 	return mQueueFamilyIndices;
 }
 
@@ -54,12 +57,13 @@ void PhysicalDeviceWrapper::RetrievePhysicalDevice() {
 
 	// Check if a suitable device was found
 	if (mPhysicalDevice != nullptr) {
-		std::cout << "Success: Found a suitable Physical Device." << std::endl;
+		std::cout << "Success: Suitable Physical Device located." << std::endl;
 	} else {
-		throw std::runtime_error("Failed to find a suitable Physical Device!");
+		throw std::runtime_error("Failed to locate a suitable Physical Device!");
 	}
 
 	AssignQueueFamilyIndices();
+	ValidateQueueFamilyIndices();
 }
 
 /*
@@ -116,7 +120,7 @@ bool PhysicalDeviceWrapper::CheckDeviceExtensionSupport(VkPhysicalDevice pDevice
 	for (size_t i = 0; i < ENABLED_PHYSICAL_DEVICE_EXTENSIONS.size(); i++) {
 		bool found = false;
 		for (uint32_t j = 0; j < availableExtensions.size(); j++) {
-			if (strcmp(ENABLED_VALIDATION_LAYERS.at(i), availableExtensions.at(j).extensionName) == 0) {
+			if (strcmp(ENABLED_PHYSICAL_DEVICE_EXTENSIONS.at(i), availableExtensions.at(j).extensionName) == 0) {
 				found = true;
 				break;
 			}
@@ -145,17 +149,48 @@ void PhysicalDeviceWrapper::AssignQueueFamilyIndices() {
 
 	// Iterate through Queue Family Properties and assign the indices
 	for (uint32_t i = 0; i < queueFamilies.size(); i++) {
-		if (queueFamilies.at(i).queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+		if (queueFamilies.at(i).queueFlags & VK_QUEUE_GRAPHICS_BIT && queueFamilies.at(i).queueCount > 0) {
 			mQueueFamilyIndices.mGraphics = i;
 		}
-		if (queueFamilies.at(i).queueFlags & VK_QUEUE_COMPUTE_BIT) {
+		if (queueFamilies.at(i).queueFlags & VK_QUEUE_COMPUTE_BIT && queueFamilies.at(i).queueCount > 0) {
 			mQueueFamilyIndices.mCompute = i;
 		}
-		if (queueFamilies.at(i).queueFlags & VK_QUEUE_TRANSFER_BIT) {
+		if (queueFamilies.at(i).queueFlags & VK_QUEUE_TRANSFER_BIT && queueFamilies.at(i).queueCount > 0) {
 			mQueueFamilyIndices.mTransfer = i;
 		}
-		if (queueFamilies.at(i).queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) {
+		if (queueFamilies.at(i).queueFlags & VK_QUEUE_SPARSE_BINDING_BIT && queueFamilies.at(i).queueCount > 0) {
 			mQueueFamilyIndices.mSparseBinding = i;
 		}
+
+		// This code checks to see if the queue family supports presentation. But we set a preference for the graphics queue.
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(mPhysicalDevice, i, mSurface->GetSurface(), &presentSupport);
+		if (presentSupport && mQueueFamilyIndices.mPresent == -1) {
+			mQueueFamilyIndices.mPresent = i;
+		}
+	}
+}
+
+
+/*
+
+	This function checks if there are queue families available for every type of operation.
+
+*/
+void PhysicalDeviceWrapper::ValidateQueueFamilyIndices() {
+	if (mQueueFamilyIndices.mGraphics == -1) {
+		throw std::runtime_error("Failed to find a suitable queue family for graphics operations!");
+	}
+	if (mQueueFamilyIndices.mPresent == -1) {
+		throw std::runtime_error("Failed to find a suitable queue family for present operations");
+	}
+	if (mQueueFamilyIndices.mCompute == -1) {
+		throw std::runtime_error("Failed to find a suitable queue family for compute operations!");
+	}
+	if (mQueueFamilyIndices.mTransfer == -1) {
+		throw std::runtime_error("Failed to find a suitable queue family for transfer operations!");
+	}
+	if (mQueueFamilyIndices.mSparseBinding == -1) {
+		throw std::runtime_error("Failed to find a suitable queue family for sparse binding operations!");
 	}
 }

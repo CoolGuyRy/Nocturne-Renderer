@@ -1,4 +1,5 @@
 #include "WindowWrapper.h"
+#include "globals.h"
 
 WindowWrapper::WindowWrapper() {
 	if (glfwInit()) {

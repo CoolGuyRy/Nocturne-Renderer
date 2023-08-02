@@ -1,4 +1,5 @@
 #include "InstanceWrapper.h"
+#include "globals.h"
 
 InstanceWrapper::InstanceWrapper() {
 	CreateInstance();

@@ -5,14 +5,16 @@
 #include <iostream>
 #include <vector>
 
-#include "PhysicalDeviceWrapper.h"
+class PhysicalDeviceWrapper;
 
 /*
 
 	Notes:
-		- I made a design decision to keep the Queues together with the Logical Device. We shall see how this goes.
-		  my thought process behind this was that since both initialization and cleanup of the queues are done in the
-		  same place, it would make sense to keep them together. I also think that it would be easier to keep track of.
+		- I made a design decision to keep the Queues together with the Logical Device. 
+		  We shall see how this goes. My thought process behind this was that since
+		  both initialization and cleanup of the queues are done in the same place, it
+		  would make sense to keep them together. I also think that it would be easier 
+		  to keep track of.
 
 */
 
@@ -23,6 +25,7 @@ public:
 
 	VkDevice GetLogicalDevice();
 	VkQueue GetGraphicsQueue();
+	VkQueue GetPresentQueue();
 private:
 	void CreateLogicalDevice();
 
@@ -30,7 +33,8 @@ private:
 
 	VkDevice mLogicalDevice;
 	VkQueue mGraphicsQueue;
+	VkQueue mPresentQueue;
+
 	PhysicalDeviceWrapper* mPhysicalDevice;
 };
-
 #endif

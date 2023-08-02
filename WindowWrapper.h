@@ -6,8 +6,6 @@
 #include <iostream>
 #include <vector>
 
-#include "globals.h"
-
 class WindowWrapper {
 public:
 	WindowWrapper();

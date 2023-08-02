@@ -8,8 +8,6 @@
 #include <string>
 #include <vector>
 
-#include "globals.h"
-
 /*
 
 	TODO: Add proper Validation Layer handling

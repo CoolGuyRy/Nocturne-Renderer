@@ -9,7 +9,7 @@
 int main() {
 	try {
 		WindowWrapper gWindow;
-		Renderer gRenderer;
+		Renderer gRenderer(&gWindow);
 
 		while (!glfwWindowShouldClose(gWindow.GetWindow())) {
 			glfwPollEvents();

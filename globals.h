@@ -23,7 +23,7 @@ const std::vector<const char*> ENABLED_PHYSICAL_DEVICE_EXTENSIONS = {
 
 };
 const std::vector<const char*> ENABLED_LOGICAL_DEVICE_EXTENSIONS = { 
-	
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 const VkPhysicalDeviceFeatures ENABLED_PHYSICAL_DEVICE_FEATURES = {
 	0, // VkBool32    robustBufferAccess;
