@@ -1,5 +1,6 @@
 #include "WindowWrapper.h"
 #include "globals.h"
+#include <Windows.h>
 
 WindowWrapper::WindowWrapper() {
 	if (glfwInit()) {
@@ -18,6 +19,15 @@ WindowWrapper::WindowWrapper() {
 	} else {
 		throw std::runtime_error("Failed to create a GLFW Window!");
 	}
+
+	RECT desktopRect;
+	const HWND hDesktop = GetDesktopWindow();
+	GetWindowRect(hDesktop, &desktopRect);
+
+	int middleX = desktopRect.right / 2 - WINDOW_WIDTH / 2;
+	int middleY = desktopRect.bottom / 2 - WINDOW_HEIGHT / 2;
+
+	glfwSetWindowPos(mWindow, middleX, middleY);
 }
 
 WindowWrapper::WindowWrapper(std::vector<std::pair<int, int>>& hints) {
