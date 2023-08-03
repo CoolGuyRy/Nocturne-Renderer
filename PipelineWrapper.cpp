@@ -13,6 +13,10 @@ PipelineWrapper::~PipelineWrapper() {
 	vkDestroyPipeline(mLogicalDevice->GetLogicalDevice(), mPipeline, nullptr);	std::cout << "Success: Pipeline Destroyed" << std::endl;
 }
 
+VkPipeline PipelineWrapper::GetPipeline() {
+	return mPipeline;
+}
+
 void PipelineWrapper::CreateComputePipeline() {
 }
 

@@ -35,6 +35,7 @@ int main() {
 
 		while (!glfwWindowShouldClose(gWindow.GetWindow())) {
 			glfwPollEvents();
+			gRenderer.Draw();
 		}
 
 	} catch (const std::runtime_error& e) {

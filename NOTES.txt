@@ -1,0 +1,8 @@
+This document will log my thought process as I make this Renderer. 
+
+8/3/23
+	I am making the FramebuffersWrapper class and I felt the need to log the decisions I made today. I decided to make the Framebuffers a separate class.
+	This was a blind decision by me but I decided to stick by it. I felt the need to log it somewhere so I can say I told you so to myself in the future
+	if it turned out to be a stupid decision.
+
+	I immediately went back against this decision.

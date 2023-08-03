@@ -139,6 +139,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CommandBufferWrapper.cpp" />
+    <ClCompile Include="CommandPoolWrapper.cpp" />
+    <ClCompile Include="FrambufferWrapper.cpp" />
     <ClCompile Include="ImageViewWrapper.cpp" />
     <ClCompile Include="InstanceWrapper.cpp" />
     <ClCompile Include="LogicalDeviceWrapper.cpp" />
@@ -150,9 +153,13 @@
     <ClCompile Include="ShaderWrapper.cpp" />
     <ClCompile Include="SurfaceWrapper.cpp" />
     <ClCompile Include="SwapchainWrapper.cpp" />
+    <ClCompile Include="SynchronizationWrapper.cpp" />
     <ClCompile Include="WindowWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CommandBufferWrapper.h" />
+    <ClInclude Include="CommandPoolWrapper.h" />
+    <ClInclude Include="FrambufferWrapper.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="ImageViewWrapper.h" />
     <ClInclude Include="InstanceWrapper.h" />
@@ -165,9 +172,11 @@
     <ClInclude Include="ShaderWrapper.h" />
     <ClInclude Include="SurfaceWrapper.h" />
     <ClInclude Include="SwapchainWrapper.h" />
+    <ClInclude Include="SynchronizationWrapper.h" />
     <ClInclude Include="WindowWrapper.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="NOTES.txt" />
     <Text Include="TODOs.txt" />
   </ItemGroup>
   <ItemGroup>

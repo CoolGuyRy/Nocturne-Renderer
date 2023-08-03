@@ -26,7 +26,9 @@ public:
 	SwapchainWrapper(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, SurfaceWrapper*);
 	~SwapchainWrapper();
 
+	VkSwapchainKHR GetSwapchain();
 	VkExtent2D GetSwapchainExtent();
+	std::vector<SwapchainImage> GetSwapchainImages();
 private:
 	void CreateSwapchain();
 
@@ -38,5 +40,4 @@ private:
 	LogicalDeviceWrapper* mLogicalDevice;
 	SurfaceWrapper* mSurface;
 };
-
 #endif

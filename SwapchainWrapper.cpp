@@ -16,8 +16,16 @@ SwapchainWrapper::~SwapchainWrapper() {
 	vkDestroySwapchainKHR(mLogicalDevice->GetLogicalDevice(), mSwapchain, nullptr); std:: cout << "Success: Swapchain destroyed." << std::endl;
 }
 
+VkSwapchainKHR SwapchainWrapper::GetSwapchain() {
+	return mSwapchain;
+}
+
 VkExtent2D SwapchainWrapper::GetSwapchainExtent() {
 	return mSwapchainExtent;
+}
+
+std::vector<SwapchainImage> SwapchainWrapper::GetSwapchainImages() {
+	return mSwapchainImages;
 }
 
 void SwapchainWrapper::CreateSwapchain() {

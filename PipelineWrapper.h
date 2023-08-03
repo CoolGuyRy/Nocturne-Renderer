@@ -19,6 +19,8 @@ class PipelineWrapper {
 public:
 	PipelineWrapper(LogicalDeviceWrapper*, RenderPassWrapper*);
 	~PipelineWrapper();
+
+	VkPipeline GetPipeline();
 private:
 	void CreateComputePipeline();
 	void CreateGenericGraphicsPipeline();
