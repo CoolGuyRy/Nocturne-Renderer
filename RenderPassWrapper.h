@@ -6,6 +6,12 @@
 class SurfaceWrapper;
 class LogicalDeviceWrapper;
 
+/*
+
+	
+
+*/
+
 class RenderPassWrapper {
 public:
 	RenderPassWrapper(LogicalDeviceWrapper*, SurfaceWrapper*);
