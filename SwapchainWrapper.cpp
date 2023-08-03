@@ -11,10 +11,13 @@ SwapchainWrapper::SwapchainWrapper(PhysicalDeviceWrapper* pDevice, LogicalDevice
 
 SwapchainWrapper::~SwapchainWrapper() {
 	for (size_t i = 0; i < mSwapchainImages.size(); i++) {
-		vkDestroyImageView(mLogicalDevice->GetLogicalDevice(), mSwapchainImages.at(i).mImageView->GetImageView(), nullptr);
-		std::cout << "Success: Image View destroyed." << std::endl;
+		delete mSwapchainImages.at(i).mImageView;
 	}
 	vkDestroySwapchainKHR(mLogicalDevice->GetLogicalDevice(), mSwapchain, nullptr); std:: cout << "Success: Swapchain destroyed." << std::endl;
+}
+
+VkExtent2D SwapchainWrapper::GetSwapchainExtent() {
+	return mSwapchainExtent;
 }
 
 void SwapchainWrapper::CreateSwapchain() {
@@ -61,8 +64,14 @@ void SwapchainWrapper::CreateSwapchain() {
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Swapchain created." << std::endl;
 	} else {
-		throw std::runtime_error("Failed to create swapchain!");
+		throw std::runtime_error("Failed to create swapchain! Error Code: " + NT_CHECK_RESULT(result));
 	}
+
+	// Establish the Swapchain Extent
+	mSwapchainExtent = {
+		(uint32_t)WINDOW_WIDTH,
+		(uint32_t)WINDOW_HEIGHT
+	};
 
 	// Grab the Swapchain Images
 	uint32_t swapchainImagesCount = 0;

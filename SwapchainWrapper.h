@@ -25,11 +25,14 @@ class SwapchainWrapper {
 public:
 	SwapchainWrapper(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, SurfaceWrapper*);
 	~SwapchainWrapper();
+
+	VkExtent2D GetSwapchainExtent();
 private:
 	void CreateSwapchain();
 
 	VkSwapchainKHR mSwapchain;
 	std::vector<SwapchainImage> mSwapchainImages;
+	VkExtent2D mSwapchainExtent;
 
 	PhysicalDeviceWrapper* mPhysicalDevice;
 	LogicalDeviceWrapper* mLogicalDevice;

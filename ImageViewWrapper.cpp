@@ -1,4 +1,5 @@
 #include "ImageViewWrapper.h"
+#include "globals.h"
 #include "LogicalDeviceWrapper.h"
 
 
@@ -7,7 +8,7 @@ ImageViewWrapper::ImageViewWrapper(LogicalDeviceWrapper* lDevice, VkImage image,
 }
 
 ImageViewWrapper::~ImageViewWrapper() {
-	vkDestroyImageView(mLogicalDevice->GetLogicalDevice(), mImageView, nullptr);
+	vkDestroyImageView(mLogicalDevice->GetLogicalDevice(), mImageView, nullptr); std::cout << "Success: Image View destroyed." << std::endl;
 }
 
 VkImageView ImageViewWrapper::GetImageView() {
@@ -43,8 +44,8 @@ void ImageViewWrapper::CreateImageView(VkImage image, VkFormat format, VkImageAs
 	// Create the ImageView
 	VkResult result = vkCreateImageView(mLogicalDevice->GetLogicalDevice(), &imageViewCI, nullptr, &mImageView);
 	if (result == VK_SUCCESS) {
-		std::cout << "Success: ImageView created." << std::endl;
+		std::cout << "Success: Image View created." << std::endl;
 	} else {
-		throw std::runtime_error("Failed to create an ImageView!");
+		throw std::runtime_error("Failed to create an Image View! Error Code: " + NT_CHECK_RESULT(result));
 	}
 }

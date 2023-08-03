@@ -144,7 +144,10 @@
     <ClCompile Include="LogicalDeviceWrapper.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PhysicalDeviceWrapper.cpp" />
+    <ClCompile Include="PipelineWrapper.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="RenderPassWrapper.cpp" />
+    <ClCompile Include="ShaderWrapper.cpp" />
     <ClCompile Include="SurfaceWrapper.cpp" />
     <ClCompile Include="SwapchainWrapper.cpp" />
     <ClCompile Include="WindowWrapper.cpp" />
@@ -156,7 +159,10 @@
     <ClInclude Include="Libraries\stb_image.h" />
     <ClInclude Include="LogicalDeviceWrapper.h" />
     <ClInclude Include="PhysicalDeviceWrapper.h" />
+    <ClInclude Include="PipelineWrapper.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="RenderPassWrapper.h" />
+    <ClInclude Include="ShaderWrapper.h" />
     <ClInclude Include="SurfaceWrapper.h" />
     <ClInclude Include="SwapchainWrapper.h" />
     <ClInclude Include="WindowWrapper.h" />
@@ -165,8 +171,8 @@
     <Text Include="TODOs.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Shaders\testFrag.frag" />
-    <None Include="Resources\Shaders\testVert.vert" />
+    <None Include="Resources\Shaders\simple.frag" />
+    <None Include="Resources\Shaders\simple.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

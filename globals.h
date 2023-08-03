@@ -2,6 +2,7 @@
 #define GLOBALS_H
 
 #include <string>
+#include <vector>
 #include <vulkan/vulkan_core.h>
 
 #ifdef NDEBUG
@@ -9,6 +10,8 @@ const bool ENABLE_VALIDATION_LAYERS = false;
 #else
 const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
+
+const uint32_t MAX_CONCURRENT_FRAMES = 3;
 
 const std::vector<const char*> ENABLED_VALIDATION_LAYERS = {
 	"VK_LAYER_KHRONOS_validation",

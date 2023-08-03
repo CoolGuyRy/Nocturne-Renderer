@@ -5,6 +5,12 @@
 
 class LogicalDeviceWrapper;
 
+/*
+
+	
+
+*/
+
 class ImageViewWrapper {
 public:
 	ImageViewWrapper(LogicalDeviceWrapper*, VkImage, VkFormat, VkImageAspectFlags);

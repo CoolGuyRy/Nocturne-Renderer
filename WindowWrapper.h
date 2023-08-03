@@ -6,6 +6,12 @@
 #include <iostream>
 #include <vector>
 
+/*
+
+	
+
+*/
+
 class WindowWrapper {
 public:
 	WindowWrapper();

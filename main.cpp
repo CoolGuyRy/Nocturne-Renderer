@@ -13,10 +13,10 @@ void PreCompileShaders() {
 	for (const auto& entry : std::filesystem::directory_iterator(pathToPrint)) {
 		std::string extension = entry.path().extension().string();
 		std::string filename = entry.path().filename().string();
-		std::string justFileName = filename.substr(0, filename.rfind('.'));
+		// std::string justFileName = filename.substr(0, filename.rfind('.'));
 
 		if (extension != ".spv") {
-			std::cout << "Precompiling "; std::string command = "C:\\VulkanSDK\\1.3.250.1\\Bin\\glslangValidator.exe -o .\\Resources\\Shaders\\" + justFileName + ".spv -V .\\Resources\\Shaders\\" + filename;
+			std::cout << "Precompiling "; std::string command = "C:\\VulkanSDK\\1.3.250.1\\Bin\\glslangValidator.exe -o .\\Resources\\Shaders\\" + filename + ".spv -V .\\Resources\\Shaders\\" + filename;
 			int returnValue = system(command.c_str());
 		} else {
 			continue;
@@ -25,6 +25,8 @@ void PreCompileShaders() {
 }
 
 int main() {
+	int gProgramSuccess = EXIT_SUCCESS;
+
 	PreCompileShaders();
 
 	try {
@@ -37,8 +39,12 @@ int main() {
 
 	} catch (const std::runtime_error& e) {
 		std::cout << "Nocturne Error: " << e.what() << std::endl;
-		return EXIT_FAILURE;
+		gProgramSuccess = EXIT_FAILURE;
 	}
 
-	return EXIT_SUCCESS;
+	#ifndef NDEBUG
+		system("PAUSE");
+	#endif
+
+	return gProgramSuccess;
 }

@@ -45,6 +45,15 @@
     <ClCompile Include="ImageViewWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPassWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Libraries\stb_image.h">
@@ -77,6 +86,15 @@
     <ClInclude Include="ImageViewWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPassWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="TODOs.txt">
@@ -84,10 +102,10 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Shaders\testFrag.frag">
+    <None Include="Resources\Shaders\simple.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Resources\Shaders\testVert.vert">
+    <None Include="Resources\Shaders\simple.vert">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

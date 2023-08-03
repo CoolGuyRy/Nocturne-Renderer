@@ -12,6 +12,15 @@ class SurfaceWrapper;
 class PhysicalDeviceWrapper;
 class LogicalDeviceWrapper;
 class SwapchainWrapper;
+class ShaderWrapper;
+class RenderPassWrapper;
+class PipelineWrapper;
+
+/*
+
+	
+
+*/
 
 class Renderer {
 public:
@@ -24,5 +33,7 @@ private:
 	PhysicalDeviceWrapper* mPhysicalDevice;
 	LogicalDeviceWrapper* mLogicalDevice;
 	SwapchainWrapper* mSwapchain;
+	RenderPassWrapper* mRenderPass;
+	PipelineWrapper* mPipeline;
 };
 #endif
