@@ -33,3 +33,12 @@ Implement a scene graph to handle hierarchical or parent-child relationships bet
 Finally, work on optimizing the renderer. This can involve techniques like frustum culling, occlusion culling, and level-of-detail rendering. Look into multi-threaded rendering and GPU instancing.
 
 ## Screenshots
+
+First ever Render run with the Nocturne Renderer!
+![First Run Screenshot](https://github.com/CoolGuyRy/Nocturne-Renderer/assets/86322787/46bb09b0-04c9-45b2-956d-863b618a4a40)
+
+Console output from first run with the Nocturne Renderer!
+![First Run Console Output Modified](https://github.com/CoolGuyRy/Nocturne-Renderer/assets/86322787/1dd96993-80d2-43a5-a46d-e5203d5f96df)
+
+
+
