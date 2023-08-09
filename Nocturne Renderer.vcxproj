@@ -146,6 +146,7 @@
     <ClCompile Include="InstanceWrapper.cpp" />
     <ClCompile Include="LogicalDeviceWrapper.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="PhysicalDeviceWrapper.cpp" />
     <ClCompile Include="PipelineWrapper.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="InstanceWrapper.h" />
     <ClInclude Include="Libraries\stb_image.h" />
     <ClInclude Include="LogicalDeviceWrapper.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="PhysicalDeviceWrapper.h" />
     <ClInclude Include="PipelineWrapper.h" />
     <ClInclude Include="Renderer.h" />

@@ -97,14 +97,15 @@ void Renderer::Draw() {
 	}
 
 	VkSwapchainKHR swapchain= mSwapchain->GetSwapchain();
-
-	VkPresentInfoKHR presentInfo = { };
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &signalSemaphore;
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &swapchain;
-	presentInfo.pImageIndices = &imageIndex;
+	VkPresentInfoKHR presentInfo = {
+		VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,									// sType
+		nullptr,															// pNext
+		1,																	// waitSemaphoreCount
+		&signalSemaphore,													// pWaitSemaphores
+		1,																	// swapchainCount
+		&swapchain,															// pSwapchains
+		&imageIndex															// pImageIndices
+	};
 
 	result = vkQueuePresentKHR(mLogicalDevice->GetPresentQueue(), &presentInfo);
 	if (result != VK_SUCCESS) {
