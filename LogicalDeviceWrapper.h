@@ -29,6 +29,7 @@ public:
 	VkDevice GetLogicalDevice();
 	VkQueue GetGraphicsQueue();
 	VkQueue GetPresentQueue();
+	VkQueue GetTransferQueue();
 private:
 	void CreateLogicalDevice();
 
@@ -37,6 +38,7 @@ private:
 	VkDevice mLogicalDevice;
 	VkQueue mGraphicsQueue;
 	VkQueue mPresentQueue;
+	VkQueue mTransferQueue;
 
 	PhysicalDeviceWrapper* mPhysicalDevice;
 };

@@ -1,4 +1,4 @@
-#include "FrambufferWrapper.h"
+#include "FramebufferWrapper.h"
 #include "globals.h"
 #include "LogicalDeviceWrapper.h"
 #include "SwapchainWrapper.h"

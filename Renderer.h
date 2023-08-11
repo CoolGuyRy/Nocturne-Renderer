@@ -53,6 +53,7 @@ private:
 	PipelineWrapper* mPipeline;
 	std::vector<FramebufferWrapper*> mFramebuffers;
 	CommandPoolWrapper* mGraphicsCommandPool;
+	CommandPoolWrapper* mTransferCommandPool;
 	std::vector<CommandBufferWrapper*> mCommandBuffers;
 	std::vector<SemaphoreWrapper*> mImageAvailableSemaphores;
 	std::vector<SemaphoreWrapper*> mRenderFinishedSemaphores;

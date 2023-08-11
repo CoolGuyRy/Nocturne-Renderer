@@ -22,6 +22,10 @@ VkQueue LogicalDeviceWrapper::GetPresentQueue() {
 	return mPresentQueue;
 }
 
+VkQueue LogicalDeviceWrapper::GetTransferQueue() {
+	return mTransferQueue;
+}
+
 void LogicalDeviceWrapper::CreateLogicalDevice() {
 	// Describe the queues to be created on the logical device
 	float queuePriority = 1.0f;
@@ -41,9 +45,17 @@ void LogicalDeviceWrapper::CreateLogicalDevice() {
 		1,																	// queueCount
 		&queuePriority														// pQueuePriorities
 	};
+	VkDeviceQueueCreateInfo transferQueueCI = {
+		VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,							// sType
+		nullptr,															// pNext
+		0,																	// flags
+		(uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mTransfer,		// queueFamilyIndex
+		1,																	// queueCount
+		&queuePriority														// pQueuePriorities
+	};
 
 	// Create an array to pass to deviceCI
-	std::vector<VkDeviceQueueCreateInfo> queueCIs = { graphicsQueueCI };
+	std::vector<VkDeviceQueueCreateInfo> queueCIs = { graphicsQueueCI, transferQueueCI };
 	
 	// Check if the present queue is the same as the graphics queue
 	if (mPhysicalDevice->GetQueueFamilyIndices().mGraphics != mPhysicalDevice->GetQueueFamilyIndices().mPresent) {
@@ -80,6 +92,7 @@ void LogicalDeviceWrapper::CreateLogicalDevice() {
 	// Get the created queue handles
 	vkGetDeviceQueue(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mGraphics, 0, &mGraphicsQueue);
 	vkGetDeviceQueue(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mPresent, 0, &mPresentQueue);
+	vkGetDeviceQueue(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mTransfer, 0, &mTransferQueue);
 }
 
 /*

@@ -7,6 +7,8 @@
 
 class PhysicalDeviceWrapper;
 class LogicalDeviceWrapper;
+class CommandPoolWrapper;
+class BufferWrapper;
 
 
 struct Vertex {
@@ -16,21 +18,26 @@ struct Vertex {
 
 class Mesh {
 public:
-	Mesh(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, std::vector<Vertex>*);
+	Mesh(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, CommandPoolWrapper*, std::vector<Vertex>*);
+	Mesh(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, CommandPoolWrapper*, std::vector<Vertex>*, std::vector<uint32_t>*);
 	~Mesh();
 
 	int GetVertexCount();
-	VkBuffer GetVertexBuffer();
+	int GetIndexCount();
+	BufferWrapper* GetVertexBuffer();
+	BufferWrapper* GetIndexBuffer();
 private:
 	void CreateVertexBuffer(std::vector<Vertex>*);
-	uint32_t FindMemoryTypeIndex(uint32_t, VkMemoryPropertyFlags);
+	void CreateIndexBuffer(std::vector<uint32_t>*);
 
 	int mVertexCount;
-	VkBuffer mVertexBuffer;
-	VkDeviceMemory mVertexBufferMemory;
+	int mIndexCount;
+	BufferWrapper* mVertexBuffer;
+	BufferWrapper* mIndexBuffer;
 
 	PhysicalDeviceWrapper* mPhysicalDevice;
 	LogicalDeviceWrapper* mLogicalDevice;
+	CommandPoolWrapper* mTransferCommandPool;
 };
 
 #endif

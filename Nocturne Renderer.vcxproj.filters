@@ -54,7 +54,7 @@
     <ClCompile Include="RenderPassWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FrambufferWrapper.cpp">
+    <ClCompile Include="FramebufferWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CommandPoolWrapper.cpp">
@@ -67,6 +67,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -110,7 +113,7 @@
     <ClInclude Include="RenderPassWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FrambufferWrapper.h">
+    <ClInclude Include="FramebufferWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CommandPoolWrapper.h">
@@ -123,6 +126,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

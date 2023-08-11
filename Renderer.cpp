@@ -9,10 +9,11 @@
 #include "ShaderWrapper.h"
 #include "RenderPassWrapper.h"
 #include "PipelineWrapper.h"
-#include "FrambufferWrapper.h"
+#include "FramebufferWrapper.h"
 #include "CommandPoolWrapper.h"
 #include "CommandBufferWrapper.h"
 #include "SynchronizationWrapper.h"
+#include "BufferWrapper.h"
 
 Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	mInstance = new InstanceWrapper();
@@ -26,6 +27,7 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 		mFramebuffers.push_back(new FramebufferWrapper(mLogicalDevice, mSwapchain, mRenderPass, (int)i));
 	}
 	mGraphicsCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mGraphics);
+	mTransferCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mTransfer);
 	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
 		mCommandBuffers.push_back(new CommandBufferWrapper(mLogicalDevice, mGraphicsCommandPool));
 	}
@@ -36,16 +38,18 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	}
 
 	std::vector<Vertex> meshVertices = {
-		{ { 0.4, -0.4, 0.0}, {1.0, 0.0, 0.0} },
-		{ { 0.4, 0.4, 0.0},	 {0.0, 1.0, 0.0} },
-		{ {-0.4, 0.4, 0.0},	 {0.0, 0.0, 1.0} },
-
-		{ {-0.4, 0.4, 0.0},	 {0.0, 0.0, 1.0} },
-		{ {-0.4, -0.4, 0.0}, {1.0, 1.0, 0.0} },
-		{ { 0.4, -0.4, 0.0}, {1.0, 0.0, 0.0} }
+		{ {  0.5f,  0.5f, 0.0f }, {1.0f, 0.0f, 0.0f } },
+		{ {  0.5f, -0.5f, 0.0f }, {0.0f, 1.0f, 0.0f } },
+		{ { -0.5f, -0.5f, 0.0f }, {0.0f, 0.0f, 1.0f } },
+		{ { -0.5f,  0.5f, 0.0f }, {1.0f, 1.0f, 0.0f } },
 	};
 
-	mFirstMesh = new Mesh(mPhysicalDevice, mLogicalDevice, &meshVertices);
+	std::vector<uint32_t> meshIndices = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
+	mFirstMesh = new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &meshVertices, &meshIndices);
 
 	RecordCommands();
 
@@ -66,6 +70,7 @@ Renderer::~Renderer() {
 	for (size_t i = 0; i < mCommandBuffers.size(); i++) {
 		delete mCommandBuffers.at(i);
 	}
+	delete mTransferCommandPool;
 	delete mGraphicsCommandPool;
 	for (size_t i = 0; i < mFramebuffers.size(); i++) {
 		delete mFramebuffers.at(i);
@@ -170,13 +175,16 @@ void Renderer::RecordCommands() {
 
 				vkCmdBindPipeline(mCommandBuffers.at(i)->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipeline());
 
-				VkBuffer vertexBuffers[] = { mFirstMesh->GetVertexBuffer() };
+				VkBuffer vertexBuffers[] = { mFirstMesh->GetVertexBuffer()->GetBuffer() };
 
 				VkDeviceSize offsets[] = { 0 };
 
 				vkCmdBindVertexBuffers(mCommandBuffers.at(i)->GetCommandBuffer(), 0, 1, vertexBuffers, offsets);
 
-				vkCmdDraw(mCommandBuffers.at(i)->GetCommandBuffer(), (uint32_t)mFirstMesh->GetVertexCount(), 1, 0, 0);
+				vkCmdBindIndexBuffer(mCommandBuffers.at(i)->GetCommandBuffer(), mFirstMesh->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+				//vkCmdDraw(mCommandBuffers.at(i)->GetCommandBuffer(), (uint32_t)mFirstMesh->GetVertexCount(), 1, 0, 0);
+				vkCmdDrawIndexed(mCommandBuffers.at(i)->GetCommandBuffer(), (uint32_t)mFirstMesh->GetIndexCount(), 1, 0, 0, 0);
 
 			vkCmdEndRenderPass(mCommandBuffers.at(i)->GetCommandBuffer());
 
