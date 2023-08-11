@@ -23,6 +23,9 @@ public:
 private:
 	void CreateInstance();
 
+	void OutputInstanceExtensions();
+	void OutputLayers();
+
 	bool checkInstanceExtensionSupport();
 	bool checkValidationLayerSupport();
 

@@ -3,14 +3,15 @@
 #include "LogicalDeviceWrapper.h"
 #include "ShaderWrapper.h"
 #include "RenderPassWrapper.h"
+#include "Mesh.h"
 
 PipelineWrapper::PipelineWrapper(LogicalDeviceWrapper* lDevice, RenderPassWrapper* renderpass) : mLogicalDevice(lDevice), mRenderPass(renderpass) {
 	CreateGenericGraphicsPipeline();
 }
 
 PipelineWrapper::~PipelineWrapper() {
-	vkDestroyPipelineLayout(mLogicalDevice->GetLogicalDevice(), mPipelineLayout, nullptr);	std::cout << "Success: Pipeline Layout Destroyed" << std::endl;
-	vkDestroyPipeline(mLogicalDevice->GetLogicalDevice(), mPipeline, nullptr);	std::cout << "Success: Pipeline Destroyed" << std::endl;
+	vkDestroyPipelineLayout(mLogicalDevice->GetLogicalDevice(), mPipelineLayout, nullptr);	std::cout << "Success: Pipeline Layout destroyed" << std::endl;
+	vkDestroyPipeline(mLogicalDevice->GetLogicalDevice(), mPipeline, nullptr);	std::cout << "Success: Pipeline destroyed" << std::endl;
 }
 
 VkPipeline PipelineWrapper::GetPipeline() {
@@ -39,15 +40,45 @@ void PipelineWrapper::CreateGenericGraphicsPipeline() {
 		shaderStageCIs.at(i) = mShaders.at(i)->GetShaderCI();
 	}
 
+	// Describe the data for a single vertex as a whole
+	VkVertexInputBindingDescription vertexInputBindingDescription = {
+		0,																	// binding
+		sizeof(Vertex),														// stride
+		VK_VERTEX_INPUT_RATE_VERTEX											// inputRate
+	};
+
+	// Create a vector to hold all the attributes contained for a single vertex
+	std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+
+	// Describe the position attribute
+	attributeDescriptions.push_back(
+		{
+			0,																// location
+			vertexInputBindingDescription.binding,							// binding
+			VK_FORMAT_R32G32B32_SFLOAT,										// format
+			offsetof(Vertex, mPosition)										// offset
+		}
+	);
+
+	// Describe the color attribute
+	attributeDescriptions.push_back(
+		{
+			1,																// location
+			vertexInputBindingDescription.binding,							// binding
+			VK_FORMAT_R32G32B32_SFLOAT,										// format
+			offsetof(Vertex, mColor)										// offset
+		}
+	);
+
 	// Create the vertex input state create info struct
 	VkPipelineVertexInputStateCreateInfo vertexInputCI = {
 		VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,			// sType
 		nullptr,															// pNext
 		0,																	// flags
-		0,																	// vertexBindingDescriptionCount
-		nullptr,															// pVertexBindingDescriptions
-		0,																	// vertexAttributeDescriptionCount
-		nullptr																// pVertexAttributeDescriptions
+		1,																	// vertexBindingDescriptionCount
+		&vertexInputBindingDescription,										// pVertexBindingDescriptions
+		(uint32_t)attributeDescriptions.size(),								// vertexAttributeDescriptionCount
+		attributeDescriptions.data()										// pVertexAttributeDescriptions
 	};
 
 	// Create the input assembly state create info struct

@@ -7,6 +7,8 @@
 #include <vector>
 #include <iostream>
 
+#include "Mesh.h"
+
 class WindowWrapper;
 class InstanceWrapper;
 class SurfaceWrapper;
@@ -36,6 +38,8 @@ public:
 	void Draw();
 private:
 	void RecordCommands();
+
+	Mesh* mFirstMesh;
 
 	int mCurrentFrame;
 

@@ -18,6 +18,9 @@ void PreCompileShaders() {
 		if (extension != ".spv") {
 			std::cout << "Precompiling "; std::string command = "C:\\VulkanSDK\\1.3.250.1\\Bin\\glslangValidator.exe -o .\\Resources\\Shaders\\" + filename + ".spv -V .\\Resources\\Shaders\\" + filename;
 			int returnValue = system(command.c_str());
+			if (returnValue != 0) {
+				throw std::runtime_error("Failed to pre-compile shader!");
+			}
 		} else {
 			continue;
 		}
@@ -27,9 +30,9 @@ void PreCompileShaders() {
 int main() {
 	int gProgramSuccess = EXIT_SUCCESS;
 
-	PreCompileShaders();
-
 	try {
+		PreCompileShaders();
+
 		WindowWrapper gWindow;
 		Renderer gRenderer(&gWindow);
 

@@ -5,6 +5,7 @@
 
 PhysicalDeviceWrapper::PhysicalDeviceWrapper(InstanceWrapper* instance, SurfaceWrapper* surface) : mInstance(instance), mSurface(surface) {
 	RetrievePhysicalDevice();
+	// OutputPhysicalDeviceExtensions();
 }
 
 PhysicalDeviceWrapper::~PhysicalDeviceWrapper() {
@@ -64,6 +65,20 @@ void PhysicalDeviceWrapper::RetrievePhysicalDevice() {
 
 	AssignQueueFamilyIndices();
 	ValidateQueueFamilyIndices();
+}
+
+void PhysicalDeviceWrapper::OutputPhysicalDeviceExtensions() {
+	uint32_t extensionCount = 0;
+	vkEnumerateDeviceExtensionProperties(mPhysicalDevice, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> extensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(mPhysicalDevice, nullptr, &extensionCount, extensions.data());
+
+	std::cout << "Physical Device Extension List: " << std::endl;
+	for (auto& extension : extensions) {
+		std::cout << extension.extensionName << std::endl;
+	}
+	std::cout << std::endl;
 }
 
 /*

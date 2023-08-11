@@ -29,12 +29,26 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
 		mCommandBuffers.push_back(new CommandBufferWrapper(mLogicalDevice, mGraphicsCommandPool));
 	}
-	RecordCommands();
 	for (size_t i = 0; i < MAX_FRAMES_DRAW; i++) {
 		mImageAvailableSemaphores.push_back(new SemaphoreWrapper(mLogicalDevice));
 		mRenderFinishedSemaphores.push_back(new SemaphoreWrapper(mLogicalDevice));
 		mDrawFences.push_back(new FenceWrapper(mLogicalDevice, VK_FENCE_CREATE_SIGNALED_BIT));
 	}
+
+	std::vector<Vertex> meshVertices = {
+		{ { 0.4, -0.4, 0.0}, {1.0, 0.0, 0.0} },
+		{ { 0.4, 0.4, 0.0},	 {0.0, 1.0, 0.0} },
+		{ {-0.4, 0.4, 0.0},	 {0.0, 0.0, 1.0} },
+
+		{ {-0.4, 0.4, 0.0},	 {0.0, 0.0, 1.0} },
+		{ {-0.4, -0.4, 0.0}, {1.0, 1.0, 0.0} },
+		{ { 0.4, -0.4, 0.0}, {1.0, 0.0, 0.0} }
+	};
+
+	mFirstMesh = new Mesh(mPhysicalDevice, mLogicalDevice, &meshVertices);
+
+	RecordCommands();
+
 
 	mCurrentFrame = 0;
 }
@@ -43,6 +57,7 @@ Renderer::~Renderer() {
 	vkDeviceWaitIdle(mLogicalDevice->GetLogicalDevice());
 
 	// Don't forget to insert in reverse order
+	delete mFirstMesh;
 	for (size_t i = 0; i < MAX_FRAMES_DRAW; i++) {
 		delete mDrawFences.at(i);
 		delete mRenderFinishedSemaphores.at(i);
@@ -79,7 +94,7 @@ void Renderer::Draw() {
 	VkCommandBuffer commandBuffer = mCommandBuffers.at(imageIndex)->GetCommandBuffer();
 	VkSemaphore signalSemaphore = mRenderFinishedSemaphores.at(mCurrentFrame)->GetSemaphore();
 
-	VkSubmitInfo submitI = {
+	VkSubmitInfo queueSI = {
 		VK_STRUCTURE_TYPE_SUBMIT_INFO,										// sType
 		nullptr,															// pNext
 		1,																	// waitSemaphoreCount
@@ -91,7 +106,7 @@ void Renderer::Draw() {
 		&signalSemaphore													// pSignalSemaphores
 	};
 
-	VkResult result = vkQueueSubmit(mLogicalDevice->GetGraphicsQueue(), 1, &submitI, mDrawFences.at(mCurrentFrame)->GetFence());
+	VkResult result = vkQueueSubmit(mLogicalDevice->GetGraphicsQueue(), 1, &queueSI, mDrawFences.at(mCurrentFrame)->GetFence());
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to submit draw command buffer to queue! Error Code: " + NT_CHECK_RESULT(result));
 	}
@@ -155,7 +170,13 @@ void Renderer::RecordCommands() {
 
 				vkCmdBindPipeline(mCommandBuffers.at(i)->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipeline());
 
-				vkCmdDraw(mCommandBuffers.at(i)->GetCommandBuffer(), 3, 1, 0, 0);
+				VkBuffer vertexBuffers[] = { mFirstMesh->GetVertexBuffer() };
+
+				VkDeviceSize offsets[] = { 0 };
+
+				vkCmdBindVertexBuffers(mCommandBuffers.at(i)->GetCommandBuffer(), 0, 1, vertexBuffers, offsets);
+
+				vkCmdDraw(mCommandBuffers.at(i)->GetCommandBuffer(), (uint32_t)mFirstMesh->GetVertexCount(), 1, 0, 0);
 
 			vkCmdEndRenderPass(mCommandBuffers.at(i)->GetCommandBuffer());
 

@@ -38,6 +38,8 @@ public:
 private:
 	void RetrievePhysicalDevice();
 
+	void OutputPhysicalDeviceExtensions();
+
 	bool CheckDeviceSuitable(VkPhysicalDevice);
 	bool CheckDeviceExtensionSupport(VkPhysicalDevice);
 	

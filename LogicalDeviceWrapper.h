@@ -9,6 +9,9 @@ class PhysicalDeviceWrapper;
 
 /*
 
+	TODO: Clean up code that checks for device extensions twice since Logical Device and
+		  physical device extensions are part of the same set.
+
 	Notes:
 		- I made a design decision to keep the Queues together with the Logical Device. 
 		  We shall see how this goes. My thought process behind this was that since

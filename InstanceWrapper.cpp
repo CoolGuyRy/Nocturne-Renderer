@@ -3,10 +3,12 @@
 
 InstanceWrapper::InstanceWrapper() {
 	CreateInstance();
+	//OutputInstanceExtensions();
+	//OutputLayers();
 }
 
 InstanceWrapper::~InstanceWrapper() {
-	vkDestroyInstance(mInstance, nullptr); std::cout << "Success: Instance Destroyed." << std::endl;
+	vkDestroyInstance(mInstance, nullptr); std::cout << "Success: Instance destroyed." << std::endl;
 }
 
 VkInstance InstanceWrapper::GetInstance() {
@@ -75,6 +77,34 @@ void InstanceWrapper::CreateInstance() {
 	} else {
 		throw std::runtime_error("Failed to create a VkInstance! Error Code: " + NT_CHECK_RESULT(result)); // not tested
 	}
+}
+
+void InstanceWrapper::OutputInstanceExtensions() {
+	uint32_t extensionCount = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
+
+	std::cout << "Instance Extension List: " << std::endl;
+	for (auto& extension : availableExtensions) {
+		std::cout << extension.extensionName << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+void InstanceWrapper::OutputLayers() {
+	uint32_t layerCount = 0;
+	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+	std::vector<VkLayerProperties> availableLayers(layerCount);
+	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+	std::cout << "Instance Layer List: " << std::endl;
+	for (auto& layer : availableLayers) {
+		std::cout << layer.layerName << std::endl;
+	}
+	std::cout << std::endl;
 }
 
 /*
