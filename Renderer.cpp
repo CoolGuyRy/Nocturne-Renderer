@@ -50,13 +50,48 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 		{ { -0.5f, -0.5f, 0.0f }, {0.0f, 0.0f, 1.0f } },
 		{ { -0.5f,  0.5f, 0.0f }, {1.0f, 1.0f, 0.0f } },
 	};
-
 	std::vector<uint32_t> meshIndices = {
 		0, 1, 3,
 		1, 2, 3
 	};
 
-	mFirstMesh = new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &meshVertices, &meshIndices);
+	std::vector<Vertex> cubeVertices = {
+		{ { -1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f } },
+		{ {  1.0f, -1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f } },
+		{ { -1.0f,  1.0f,  1.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ {  1.0f,  1.0f,  1.0f }, { 1.0f, 1.0f, 0.0f } },
+		{ { -1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f, 1.0f } },
+		{ {  1.0f, -1.0f, -1.0f }, { 0.0f, 1.0f, 1.0f } },
+		{ { -1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } },
+		{ {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } }
+	};
+	std::vector<uint32_t> cubeIndices = {
+		//Top
+		2, 6, 7,
+		2, 3, 7,
+
+		//Bottom
+		0, 4, 5,
+		0, 1, 5,
+
+		//Left
+		0, 2, 6,
+		0, 4, 6,
+
+		//Right
+		1, 3, 7,
+		1, 5, 7,
+
+		//Front
+		0, 2, 3,
+		0, 1, 3,
+
+		//Back
+		4, 6, 7,
+		4, 5, 7
+	};
+
+	mFirstMesh = new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &cubeVertices, &cubeIndices);
 
 	RecordCommands();
 

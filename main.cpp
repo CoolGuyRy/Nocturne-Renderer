@@ -48,7 +48,8 @@ int main() {
 			glfwPollEvents();
 
 			angle = angle + 30.0f * deltaTime;
-			gRenderer.GetModel() = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+			gRenderer.GetModel() = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(1.0f, 1.0f, 0.0f));
+			gRenderer.GetModel() = glm::scale(gRenderer.GetModel(), glm::vec3(0.5f, 0.5f, 0.5f));
 
 			gRenderer.Draw();
 		}
