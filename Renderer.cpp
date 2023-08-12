@@ -14,6 +14,8 @@
 #include "CommandBufferWrapper.h"
 #include "SynchronizationWrapper.h"
 #include "BufferWrapper.h"
+#include "Mesh.h"
+#include "DescriptorSetWrapper.h"
 
 Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	mInstance = new InstanceWrapper();
@@ -22,14 +24,19 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	mLogicalDevice = new LogicalDeviceWrapper(mPhysicalDevice);
 	mSwapchain = new SwapchainWrapper(mPhysicalDevice, mLogicalDevice, mSurface);
 	mRenderPass = new RenderPassWrapper(mLogicalDevice, mSurface);
-	mPipeline = new PipelineWrapper(mLogicalDevice, mRenderPass);
+	mDescriptorSetLayout = new DescriptorSetLayoutWrapper(mLogicalDevice);
+	mPipeline = new PipelineWrapper(mLogicalDevice, mRenderPass, mDescriptorSetLayout);
 	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
 		mFramebuffers.push_back(new FramebufferWrapper(mLogicalDevice, mSwapchain, mRenderPass, (int)i));
 	}
 	mGraphicsCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mGraphics);
 	mTransferCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mTransfer);
+	mDescriptorPool = new DescriptorPoolWrapper(mLogicalDevice);
 	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
 		mCommandBuffers.push_back(new CommandBufferWrapper(mLogicalDevice, mGraphicsCommandPool));
+		mUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)sizeof(MVP), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
+		mDescriptorSets.push_back(new DescriptorSetWrapper(mLogicalDevice, mDescriptorSetLayout, mDescriptorPool));
+		mDescriptorSets.at(i)->WriteGenericDescriptorSet(mUniformBuffers.at(i));
 	}
 	for (size_t i = 0; i < MAX_FRAMES_DRAW; i++) {
 		mImageAvailableSemaphores.push_back(new SemaphoreWrapper(mLogicalDevice));
@@ -53,6 +60,9 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 
 	RecordCommands();
 
+	mMVP.mProjection = glm::perspective(glm::radians(45.0f), (float)mSwapchain->GetSwapchainExtent().width / (float)mSwapchain->GetSwapchainExtent().height, 0.1f, 10.0f);
+	mMVP.mView = glm::lookAt(glm::vec3(2.0f, 1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	mMVP.mModel = glm::mat4(1.0f);
 
 	mCurrentFrame = 0;
 }
@@ -68,14 +78,18 @@ Renderer::~Renderer() {
 		delete mImageAvailableSemaphores.at(i);
 	}
 	for (size_t i = 0; i < mCommandBuffers.size(); i++) {
+		delete mDescriptorSets.at(i);
+		delete mUniformBuffers.at(i);
 		delete mCommandBuffers.at(i);
 	}
+	delete mDescriptorPool;
 	delete mTransferCommandPool;
 	delete mGraphicsCommandPool;
 	for (size_t i = 0; i < mFramebuffers.size(); i++) {
 		delete mFramebuffers.at(i);
 	}
 	delete mPipeline;
+	delete mDescriptorSetLayout;
 	delete mRenderPass;
 	delete mSwapchain;
 	delete mLogicalDevice;
@@ -92,6 +106,7 @@ void Renderer::Draw() {
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(mLogicalDevice->GetLogicalDevice(), mSwapchain->GetSwapchain(), UINT64_MAX, mImageAvailableSemaphores.at(mCurrentFrame)->GetSemaphore(), VK_NULL_HANDLE, &imageIndex);
 
+	mUniformBuffers.at(imageIndex)->MapBufferMemory(&mMVP, sizeof(MVP));
 
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
@@ -133,6 +148,10 @@ void Renderer::Draw() {
 	}
 
 	mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_DRAW;
+}
+
+glm::mat4& Renderer::GetModel() {
+	return mMVP.mModel;
 }
 
 void Renderer::RecordCommands() {
@@ -182,6 +201,9 @@ void Renderer::RecordCommands() {
 				vkCmdBindVertexBuffers(mCommandBuffers.at(i)->GetCommandBuffer(), 0, 1, vertexBuffers, offsets);
 
 				vkCmdBindIndexBuffer(mCommandBuffers.at(i)->GetCommandBuffer(), mFirstMesh->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+				VkDescriptorSet descriptorSet = mDescriptorSets.at(i)->GetDescriptorSet();
+				vkCmdBindDescriptorSets(mCommandBuffers.at(i)->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
 
 				//vkCmdDraw(mCommandBuffers.at(i)->GetCommandBuffer(), (uint32_t)mFirstMesh->GetVertexCount(), 1, 0, 0);
 				vkCmdDrawIndexed(mCommandBuffers.at(i)->GetCommandBuffer(), (uint32_t)mFirstMesh->GetIndexCount(), 1, 0, 0, 0);

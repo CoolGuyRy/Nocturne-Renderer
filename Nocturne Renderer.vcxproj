@@ -142,6 +142,7 @@
     <ClCompile Include="BufferWrapper.cpp" />
     <ClCompile Include="CommandBufferWrapper.cpp" />
     <ClCompile Include="CommandPoolWrapper.cpp" />
+    <ClCompile Include="DescriptorSetWrapper.cpp" />
     <ClCompile Include="FramebufferWrapper.cpp" />
     <ClCompile Include="ImageViewWrapper.cpp" />
     <ClCompile Include="InstanceWrapper.cpp" />
@@ -162,6 +163,7 @@
     <ClInclude Include="BufferWrapper.h" />
     <ClInclude Include="CommandBufferWrapper.h" />
     <ClInclude Include="CommandPoolWrapper.h" />
+    <ClInclude Include="DescriptorSetWrapper.h" />
     <ClInclude Include="FramebufferWrapper.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="ImageViewWrapper.h" />

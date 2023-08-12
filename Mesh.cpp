@@ -5,10 +5,6 @@
 #include "CommandPoolWrapper.h"
 #include "BufferWrapper.h"
 
-Mesh::Mesh(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tPool, std::vector<Vertex>* vertices) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice), mTransferCommandPool(tPool) {
-	CreateVertexBuffer(vertices);
-}
-
 Mesh::Mesh(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tPool, std::vector<Vertex>* vertices, std::vector<uint32_t>* indices) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice), mTransferCommandPool(tPool) {
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);

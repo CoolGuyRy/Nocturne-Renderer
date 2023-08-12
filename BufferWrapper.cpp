@@ -10,8 +10,8 @@ BufferWrapper::BufferWrapper(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrappe
 }
 
 BufferWrapper::~BufferWrapper() {
-	vkDestroyBuffer(mLogicalDevice->GetLogicalDevice(), mBuffer, nullptr); std::cout << "Success: Vertex Buffer destroyed." << std::endl;
-	vkFreeMemory(mLogicalDevice->GetLogicalDevice(), mBufferMemory, nullptr); std::cout << "Success: Vertex Buffer Memory freed." << std::endl;
+	vkDestroyBuffer(mLogicalDevice->GetLogicalDevice(), mBuffer, nullptr); std::cout << "Success: Buffer destroyed." << std::endl;
+	vkFreeMemory(mLogicalDevice->GetLogicalDevice(), mBufferMemory, nullptr); std::cout << "Success: Buffer Memory freed." << std::endl;
 }
 
 void BufferWrapper::MapBufferMemory(void* iData, VkDeviceSize dSize) {
@@ -30,7 +30,7 @@ VkDeviceMemory BufferWrapper::GetBufferMemory() {
 }
 
 void BufferWrapper::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, VkMemoryPropertyFlags pFlags) {
-	// Create Vertex Buffer struct
+	// Create Buffer struct
 	VkBufferCreateInfo bufferCI = {
 		VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,																								// sType
 		nullptr,																															// pNext
@@ -42,19 +42,19 @@ void BufferWrapper::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, 
 		nullptr																																// pQueueFamilyIndices
 	};
 
-	// Create Vertex Buffer
+	// Create Buffer
 	VkResult result = vkCreateBuffer(mLogicalDevice->GetLogicalDevice(), &bufferCI, nullptr, &mBuffer);
 	if (result == VK_SUCCESS) {
-		std::cout << "Success: Vertex Buffer created!" << std::endl;
+		std::cout << "Success: Buffer created!" << std::endl;
 	} else {
-		throw std::runtime_error("Failed to create Vertex Buffer! Error Code: " + NT_CHECK_RESULT(result));
+		throw std::runtime_error("Failed to create Buffer! Error Code: " + NT_CHECK_RESULT(result));
 	}
 
 	// Grab Buffer Memory Requirements
 	VkMemoryRequirements memoryRequirements;
 	vkGetBufferMemoryRequirements(mLogicalDevice->GetLogicalDevice(), mBuffer, &memoryRequirements);
 
-	// Allocate Memory for Vertex Buffer struct
+	// Allocate Memory for Buffer struct
 	VkMemoryAllocateInfo memoryAI = {
 		VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,																								// sType
 		nullptr,																															// pNext
@@ -62,15 +62,15 @@ void BufferWrapper::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, 
 		FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)	// memoryTypeIndex
 	};
 
-	// Allocate Memory for Vertex Buffer
+	// Allocate Memory for Buffer
 	result = vkAllocateMemory(mLogicalDevice->GetLogicalDevice(), &memoryAI, nullptr, &mBufferMemory);
 	if (result == VK_SUCCESS) {
-		std::cout << "Success: Vertex Buffer Memory allocated!" << std::endl;
+		std::cout << "Success: Buffer Memory allocated!" << std::endl;
 	} else {
-		throw std::runtime_error("Failed to allocate Vertex Buffer Memory! Error Code: " + NT_CHECK_RESULT(result));
+		throw std::runtime_error("Failed to allocate Buffer Memory! Error Code: " + NT_CHECK_RESULT(result));
 	}
 
-	// Bind Vertex Buffer Memory
+	// Bind Buffer Memory
 	vkBindBufferMemory(mLogicalDevice->GetLogicalDevice(), mBuffer, mBufferMemory, 0);
 }
 

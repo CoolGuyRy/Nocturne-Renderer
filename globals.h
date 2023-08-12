@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_core.h>
+#include <glm/glm.hpp>
 
 #ifdef NDEBUG
 const bool ENABLE_VALIDATION_LAYERS = false;
@@ -13,6 +14,7 @@ const bool ENABLE_VALIDATION_LAYERS = true;
 
 const uint32_t MAX_CONCURRENT_FRAMES = 3;
 const uint32_t MAX_FRAMES_DRAW = 2;
+const uint32_t SWAPCHAIN_IMAGE_COUNT = 3;
 
 const std::vector<const char*> ENABLED_VALIDATION_LAYERS = {
 	"VK_LAYER_KHRONOS_validation",

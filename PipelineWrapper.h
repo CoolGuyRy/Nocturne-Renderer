@@ -8,6 +8,7 @@
 class LogicalDeviceWrapper;
 class ShaderWrapper;
 class RenderPassWrapper;
+class DescriptorSetLayoutWrapper;
 
 /*
 
@@ -17,10 +18,11 @@ class RenderPassWrapper;
 
 class PipelineWrapper {
 public:
-	PipelineWrapper(LogicalDeviceWrapper*, RenderPassWrapper*);
+	PipelineWrapper(LogicalDeviceWrapper*, RenderPassWrapper*, DescriptorSetLayoutWrapper*);
 	~PipelineWrapper();
 
 	VkPipeline GetPipeline();
+	VkPipelineLayout GetPipelineLayout();
 private:
 	void CreateComputePipeline();
 	void CreateGenericGraphicsPipeline();
@@ -30,6 +32,7 @@ private:
 
 	LogicalDeviceWrapper* mLogicalDevice;
 	RenderPassWrapper* mRenderPass;
+	DescriptorSetLayoutWrapper* mDescriptorSetLayout;
 };
 
 #endif

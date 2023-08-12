@@ -36,8 +36,20 @@ int main() {
 		WindowWrapper gWindow;
 		Renderer gRenderer(&gWindow);
 
+		float angle = 0.0f;
+		float deltaTime = 0.0f;
+		float lastTime = 0.0f;
+
 		while (!glfwWindowShouldClose(gWindow.GetWindow())) {
+			float now = glfwGetTime();
+			deltaTime = now - lastTime;
+			lastTime = now;
+
 			glfwPollEvents();
+
+			angle = angle + 30.0f * deltaTime;
+			gRenderer.GetModel() = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
 			gRenderer.Draw();
 		}
 

@@ -4,8 +4,9 @@
 #include "ShaderWrapper.h"
 #include "RenderPassWrapper.h"
 #include "Mesh.h"
+#include "DescriptorSetWrapper.h"
 
-PipelineWrapper::PipelineWrapper(LogicalDeviceWrapper* lDevice, RenderPassWrapper* renderpass) : mLogicalDevice(lDevice), mRenderPass(renderpass) {
+PipelineWrapper::PipelineWrapper(LogicalDeviceWrapper* lDevice, RenderPassWrapper* renderpass, DescriptorSetLayoutWrapper* layout) : mLogicalDevice(lDevice), mRenderPass(renderpass), mDescriptorSetLayout(layout) {
 	CreateGenericGraphicsPipeline();
 }
 
@@ -16,6 +17,10 @@ PipelineWrapper::~PipelineWrapper() {
 
 VkPipeline PipelineWrapper::GetPipeline() {
 	return mPipeline;
+}
+
+VkPipelineLayout PipelineWrapper::GetPipelineLayout() {
+	return mPipelineLayout;
 }
 
 void PipelineWrapper::CreateComputePipeline() {
@@ -121,7 +126,7 @@ void PipelineWrapper::CreateGenericGraphicsPipeline() {
 		VK_FALSE,															// depthClampEnable
 		VK_FALSE,															// rasterizerDiscardEnable
 		VK_POLYGON_MODE_FILL,												// polygonMode
-		VK_CULL_MODE_BACK_BIT,												// cullMode
+		VK_CULL_MODE_NONE,													// cullMode
 		VK_FRONT_FACE_COUNTER_CLOCKWISE,									// frontFace
 		VK_FALSE,															// depthBiasEnable
 		0.0f,																// depthBiasConstantFactor
@@ -170,12 +175,13 @@ void PipelineWrapper::CreateGenericGraphicsPipeline() {
 	};
 
 	// Create the pipeline layout create info struct
+	VkDescriptorSetLayout layout = mDescriptorSetLayout->GetDescriptorSetLayout();
 	VkPipelineLayoutCreateInfo pipelineLayoutCI = {
 		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,						// sType
 		nullptr,															// pNext
 		0,																	// flags
-		0,																	// setLayoutCount
-		nullptr,															// pSetLayouts
+		1,																	// setLayoutCount
+		&layout,															// pSetLayouts
 		0,																	// pushConstantRangeCount
 		nullptr																// pPushConstantRanges
 	};
