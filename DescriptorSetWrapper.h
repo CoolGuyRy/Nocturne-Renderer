@@ -14,6 +14,7 @@ public:
 	VkDescriptorSetLayout GetDescriptorSetLayout();
 private:
 	void CreateGenericDescriptorSetLayout();
+	void CreateDynamicDescriptorSetLayout();
 
 	VkDescriptorSetLayout mDescriptorSetLayout;
 
@@ -28,6 +29,7 @@ public:
 	VkDescriptorPool GetDescriptorPool();
 private:
 	void CreateGenericDescriptorPool();
+	void CreateDynamicDescriptorPool();
 
 	VkDescriptorPool mDescriptorPool;
 	
@@ -40,10 +42,12 @@ public:
 	~DescriptorSetWrapper();
 
 	void WriteGenericDescriptorSet(BufferWrapper*);
+	void WriteDynamicDescriptorSet(BufferWrapper*, BufferWrapper*);
 
 	VkDescriptorSet GetDescriptorSet();
 private:
 	void CreateGenericDescriptorSet();
+	void CreateDynamicDescriptorSet();
 
 	VkDescriptorSet mDescriptorSet;
 

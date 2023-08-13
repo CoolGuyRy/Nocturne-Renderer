@@ -8,11 +8,20 @@
 Mesh::Mesh(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tPool, std::vector<Vertex>* vertices, std::vector<uint32_t>* indices) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice), mTransferCommandPool(tPool) {
 	CreateVertexBuffer(vertices);
 	CreateIndexBuffer(indices);
+	mModel = glm::mat4(1.0f);
 }
 
 Mesh::~Mesh() {
 	delete mIndexBuffer;
 	delete mVertexBuffer;
+}
+
+glm::mat4 Mesh::GetModel() {
+	return mModel;
+}
+
+void Mesh::SetModel(glm::mat4 model) {
+	mModel = model;
 }
 
 int Mesh::GetVertexCount() {

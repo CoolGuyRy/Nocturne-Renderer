@@ -41,15 +41,35 @@ int main() {
 		float lastTime = 0.0f;
 
 		while (!glfwWindowShouldClose(gWindow.GetWindow())) {
-			float now = glfwGetTime();
+			float now = (float)glfwGetTime();
 			deltaTime = now - lastTime;
 			lastTime = now;
 
 			glfwPollEvents();
 
-			angle = angle + 30.0f * deltaTime;
-			gRenderer.GetModel() = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(1.0f, 1.0f, 0.0f));
-			gRenderer.GetModel() = glm::scale(gRenderer.GetModel(), glm::vec3(0.5f, 0.5f, 0.5f));
+			angle = angle + 1.0f * deltaTime;
+
+			glm::mat4 model1(1.0f);
+
+			model1 = glm::scale(model1, glm::vec3(0.25, 0.25, 0.25));
+
+			model1 = glm::translate(model1, glm::vec3(-5.0f, 0.0f, 0.0f));
+
+			model1 = glm::rotate(model1, angle, glm::vec3(1.0f, 0.0f, 1.0f));			
+
+			gRenderer.UpdateModel(0, model1);
+
+			glm::mat4 model2(1.0f);
+
+			model2 = glm::scale(model2, glm::vec3(0.25, 0.25, 0.25));
+
+			model2 = glm::translate(model2, glm::vec3(5.0f, 0.0f, 0.0f));
+
+			model2 = glm::rotate(model2, -angle, glm::vec3(1.0f, 0.0f, 1.0f));
+
+			gRenderer.UpdateModel(1, model2);
+
+
 
 			gRenderer.Draw();
 		}

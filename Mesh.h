@@ -21,6 +21,9 @@ public:
 	Mesh(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, CommandPoolWrapper*, std::vector<Vertex>*, std::vector<uint32_t>*);
 	~Mesh();
 
+	glm::mat4 GetModel();
+	void SetModel(glm::mat4);
+
 	int GetVertexCount();
 	int GetIndexCount();
 	BufferWrapper* GetVertexBuffer();
@@ -28,6 +31,8 @@ public:
 private:
 	void CreateVertexBuffer(std::vector<Vertex>*);
 	void CreateIndexBuffer(std::vector<uint32_t>*);
+
+	glm::mat4 mModel;
 
 	int mVertexCount;
 	int mIndexCount;

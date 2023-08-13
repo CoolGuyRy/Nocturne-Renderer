@@ -29,10 +29,9 @@ class DescriptorSetLayoutWrapper;
 class DescriptorPoolWrapper;
 class DescriptorSetWrapper;
 
-struct MVP {
+struct UboViewProjection {
 	glm::mat4 mProjection;
 	glm::mat4 mView;
-	glm::mat4 mModel;
 };
 
 /*
@@ -48,15 +47,21 @@ public:
 
 	void Draw();
 
-	glm::mat4& GetModel();
+	void UpdateModel(int, glm::mat4);
 private:
 	void RecordCommands();
 
-	Mesh* mFirstMesh;
+	void allocateDynamicBufferTransferSpace();
 
-	MVP mMVP;
+	std::vector<Mesh*> mMeshList;
+
+	UboViewProjection mVP;
 
 	int mCurrentFrame;
+
+	VkDeviceSize mMinUniformBufferOffset;
+	size_t mModelUniformAlignment;
+	glm::mat4* mModelTransferSpace;
 
 	WindowWrapper* mWindow;
 	InstanceWrapper* mInstance;
@@ -76,6 +81,7 @@ private:
 	std::vector<FenceWrapper*> mDrawFences;
 	DescriptorSetLayoutWrapper* mDescriptorSetLayout;
 	std::vector<BufferWrapper*> mUniformBuffers;
+	std::vector<BufferWrapper*> mDynamicUniformBuffers;
 	std::vector<DescriptorSetWrapper*> mDescriptorSets;
 };
 #endif
