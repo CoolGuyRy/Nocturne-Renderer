@@ -208,7 +208,7 @@ void DescriptorSetWrapper::WriteDynamicDescriptorSet(BufferWrapper* viewProj, Bu
 	VkDescriptorBufferInfo modelBI = {
 		model->GetBuffer(),												// buffer
 		0,																// offset
-		sizeof(glm::mat4)												// range (NOTE: WRONG WAY TO DO THIS. SHOULD GRAB MIN VALUE FROM RENDERER)
+		sizeof(glm::mat4)												// range (NOTE: WRONG WAY TO DO THIS. SHOULD GRAB ALIGN VALUE FROM RENDERER)
 	};
 
 	VkWriteDescriptorSet modelWriteDescriptorSet = {
@@ -226,7 +226,7 @@ void DescriptorSetWrapper::WriteDynamicDescriptorSet(BufferWrapper* viewProj, Bu
 
 	std::vector<VkWriteDescriptorSet> writeDescriptorSets = { viewProjWriteDescriptorSet, modelWriteDescriptorSet };
 
-	vkUpdateDescriptorSets(mLogicalDevice->GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(mLogicalDevice->GetLogicalDevice(), (uint32_t)writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
 }
 
 VkDescriptorSet DescriptorSetWrapper::GetDescriptorSet() {

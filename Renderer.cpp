@@ -26,14 +26,12 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	mRenderPass = new RenderPassWrapper(mLogicalDevice, mSurface);
 	mDescriptorSetLayout = new DescriptorSetLayoutWrapper(mLogicalDevice);
 	mPipeline = new PipelineWrapper(mLogicalDevice, mRenderPass, mDescriptorSetLayout);
-	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
-		mFramebuffers.push_back(new FramebufferWrapper(mLogicalDevice, mSwapchain, mRenderPass, (int)i));
-	}
 	mGraphicsCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mGraphics);
 	mTransferCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mTransfer);
 	mDescriptorPool = new DescriptorPoolWrapper(mLogicalDevice);
 	allocateDynamicBufferTransferSpace();	// Figure out the spacing necessary for aligned memory access of dynamic buffers
 	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
+		mFramebuffers.push_back(new FramebufferWrapper(mLogicalDevice, mSwapchain, mRenderPass, (int)i));
 		mCommandBuffers.push_back(new CommandBufferWrapper(mLogicalDevice, mGraphicsCommandPool));
 		mUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)sizeof(mVP), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
 		mDynamicUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)(mModelUniformAlignment * MAX_OBJECTS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
@@ -45,17 +43,6 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 		mRenderFinishedSemaphores.push_back(new SemaphoreWrapper(mLogicalDevice));
 		mDrawFences.push_back(new FenceWrapper(mLogicalDevice, VK_FENCE_CREATE_SIGNALED_BIT));
 	}
-
-	std::vector<Vertex> meshVertices = {
-		{ {  0.5f,  0.5f, 0.0f }, {1.0f, 0.0f, 0.0f } },
-		{ {  0.5f, -0.5f, 0.0f }, {0.0f, 1.0f, 0.0f } },
-		{ { -0.5f, -0.5f, 0.0f }, {0.0f, 0.0f, 1.0f } },
-		{ { -0.5f,  0.5f, 0.0f }, {1.0f, 1.0f, 0.0f } },
-	};
-	std::vector<uint32_t> meshIndices = {
-		0, 1, 3,
-		1, 2, 3
-	};
 
 	std::vector<Vertex> cubeVertices = {
 		{ { -1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f } },
@@ -94,7 +81,6 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	};
 
 	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &cubeVertices, &cubeIndices));
-
 	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &cubeVertices, &cubeIndices));
 
 	RecordCommands();
@@ -153,11 +139,13 @@ void Renderer::Draw() {
 	// Update Uniform Buffers and Dynamic Uniform Buffers
 	mUniformBuffers.at(imageIndex)->MapBufferMemory(&mVP, sizeof(mVP));
 
+	// Update mModelTransferSpace with all of the fresh model information
 	for (size_t i = 0; i < mMeshList.size(); i++) {
-		glm::mat4* thisModel = (glm::mat4*)((uint64_t)mModelTransferSpace + (i * mModelUniformAlignment * i));
+		glm::mat4* thisModel = (glm::mat4*)((uint64_t)mModelTransferSpace + (mModelUniformAlignment * i));
 		*thisModel = mMeshList.at(i)->GetModel();
 	}
 
+	// Push newly updated model info to graphics card
 	mDynamicUniformBuffers.at(imageIndex)->MapBufferMemory(mModelTransferSpace, mModelUniformAlignment * mMeshList.size());
 
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };

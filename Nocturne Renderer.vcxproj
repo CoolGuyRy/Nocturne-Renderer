@@ -112,9 +112,14 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.250.1\Lib;$(SolutionDir)Libraries\GLFW\GLFW\lib-vc2022;$(SolutionDir)Libraries\ASSIMP\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <IgnoreSpecificDefaultLibraries>MSVCRT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -134,10 +139,23 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.250.1\Lib;$(SolutionDir)Libraries\GLFW\GLFW\lib-vc2022;$(SolutionDir)Libraries\ASSIMP\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <IgnoreSpecificDefaultLibraries>MSVCRT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="NOTES.txt" />
+    <Text Include="TODOs.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Shaders\simple.frag" />
+    <None Include="Resources\Shaders\simple.vert" />
+  </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BufferWrapper.cpp" />
     <ClCompile Include="CommandBufferWrapper.cpp" />
@@ -168,7 +186,6 @@
     <ClInclude Include="globals.h" />
     <ClInclude Include="ImageViewWrapper.h" />
     <ClInclude Include="InstanceWrapper.h" />
-    <ClInclude Include="Libraries\stb_image.h" />
     <ClInclude Include="LogicalDeviceWrapper.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PhysicalDeviceWrapper.h" />
@@ -180,14 +197,6 @@
     <ClInclude Include="SwapchainWrapper.h" />
     <ClInclude Include="SynchronizationWrapper.h" />
     <ClInclude Include="WindowWrapper.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="NOTES.txt" />
-    <Text Include="TODOs.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Shaders\simple.frag" />
-    <None Include="Resources\Shaders\simple.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
