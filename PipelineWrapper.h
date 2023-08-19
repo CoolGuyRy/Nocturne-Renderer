@@ -26,6 +26,7 @@ public:
 private:
 	void CreateComputePipeline();
 	void CreateGenericGraphicsPipeline();
+	void CreateDepthGraphicsPipeline();
 
 	VkPipeline mPipeline;
 	VkPipelineLayout mPipelineLayout;

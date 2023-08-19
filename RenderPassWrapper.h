@@ -20,6 +20,7 @@ public:
 	VkRenderPass GetRenderPass();
 private:
 	void CreateGenericRenderPass();
+	void CreateDepthRenderPass();
 
 	VkRenderPass mRenderPass;
 

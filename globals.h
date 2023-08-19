@@ -1,6 +1,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -217,5 +218,27 @@ static std::string NT_CHECK_RESULT(int code) {
 			return "NOCTURNE_NOT_DEFINED";
 			break;
 	}
+}
+
+/*
+
+	This function is used to find the memory type index that has all the required property bits set.
+	It loops through all the memory types available on the device and checks if their bit field matches
+	the desired properties. Once it finds a memory type that fits all the properties we need, it returns
+
+*/
+static uint32_t FindMemoryTypeIndex(VkPhysicalDevice device, uint32_t allowedTypes, VkMemoryPropertyFlags properties) {
+	VkPhysicalDeviceMemoryProperties memoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(device, &memoryProperties);
+
+	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+		if ((allowedTypes & (1 << i)) && ((memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)) {
+			return i; // Valid Memory type, so return its index
+		}
+	}
+
+	throw std::runtime_error("Failed to find a suitable memory type!");
+
+	return UINT32_MAX;
 }
 #endif

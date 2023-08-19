@@ -91,6 +91,9 @@
     <ClCompile Include="WindowWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImageWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BufferWrapper.h">
@@ -148,6 +151,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WindowWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

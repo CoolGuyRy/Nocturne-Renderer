@@ -163,6 +163,7 @@
     <ClCompile Include="DescriptorSetWrapper.cpp" />
     <ClCompile Include="FramebufferWrapper.cpp" />
     <ClCompile Include="ImageViewWrapper.cpp" />
+    <ClCompile Include="ImageWrapper.cpp" />
     <ClCompile Include="InstanceWrapper.cpp" />
     <ClCompile Include="LogicalDeviceWrapper.cpp" />
     <ClCompile Include="main.cpp" />
@@ -185,6 +186,7 @@
     <ClInclude Include="FramebufferWrapper.h" />
     <ClInclude Include="globals.h" />
     <ClInclude Include="ImageViewWrapper.h" />
+    <ClInclude Include="ImageWrapper.h" />
     <ClInclude Include="InstanceWrapper.h" />
     <ClInclude Include="LogicalDeviceWrapper.h" />
     <ClInclude Include="Mesh.h" />

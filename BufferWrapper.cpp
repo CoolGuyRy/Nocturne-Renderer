@@ -59,7 +59,7 @@ void BufferWrapper::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, 
 		VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,																								// sType
 		nullptr,																															// pNext
 		memoryRequirements.size,																											// allocationSize
-		FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)	// memoryTypeIndex
+		FindMemoryTypeIndex(mPhysicalDevice->GetPhysicalDevice(), memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)	// memoryTypeIndex
 	};
 
 	// Allocate Memory for Buffer
@@ -72,28 +72,6 @@ void BufferWrapper::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, 
 
 	// Bind Buffer Memory
 	vkBindBufferMemory(mLogicalDevice->GetLogicalDevice(), mBuffer, mBufferMemory, 0);
-}
-
-/*
-
-	This function is used to find the memory type index that has all the required property bits set.
-	It loops through all the memory types available on the device and checks if their bit field matches
-	the desired properties. Once it finds a memory type that fits all the properties we need, it returns
-
-*/
-uint32_t BufferWrapper::FindMemoryTypeIndex(uint32_t allowedTypes, VkMemoryPropertyFlags properties) {
-	VkPhysicalDeviceMemoryProperties memoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice->GetPhysicalDevice(), &memoryProperties);
-
-	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
-		if ((allowedTypes & (1 << i)) && ((memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)) {
-			return i; // Valid Memory type, so return its index
-		}
-	}
-
-	throw std::runtime_error("Failed to find a suitable memory type!");
-
-	return UINT32_MAX;
 }
 
 void CopyBuffer(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tCommandPool, BufferWrapper* srcBuffer, BufferWrapper* dstBuffer, VkDeviceSize bufferSize) {

@@ -26,8 +26,6 @@ public:
 private:
 	void CreateBuffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags);
 
-	uint32_t FindMemoryTypeIndex(uint32_t, VkMemoryPropertyFlags);
-
 	VkBuffer mBuffer;
 	VkDeviceMemory mBufferMemory;
 

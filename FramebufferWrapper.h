@@ -7,6 +7,7 @@
 class LogicalDeviceWrapper;
 class SwapchainWrapper;
 class RenderPassWrapper;
+class ImageViewWrapper;
 
 /*
 
@@ -17,11 +18,13 @@ class RenderPassWrapper;
 class FramebufferWrapper {
 public:
 	FramebufferWrapper(LogicalDeviceWrapper*, SwapchainWrapper*, RenderPassWrapper*, int);
+	FramebufferWrapper(LogicalDeviceWrapper*, SwapchainWrapper*, RenderPassWrapper*, int, ImageViewWrapper*);
 	~FramebufferWrapper();
 
 	VkFramebuffer GetFramebuffer();
 private:
 	void CreateFramebuffer(int);
+	void CreateFramebuffer(int, ImageViewWrapper*);
 
 	VkFramebuffer mFramebuffer;
 

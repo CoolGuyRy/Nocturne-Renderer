@@ -16,6 +16,8 @@
 #include "BufferWrapper.h"
 #include "Mesh.h"
 #include "DescriptorSetWrapper.h"
+#include "ImageWrapper.h"
+#include "ImageViewWrapper.h"
 
 Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	mInstance = new InstanceWrapper();
@@ -29,9 +31,11 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	mGraphicsCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mGraphics);
 	mTransferCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mTransfer);
 	mDescriptorPool = new DescriptorPoolWrapper(mLogicalDevice);
+	mDepthImage = new ImageWrapper(mPhysicalDevice, mLogicalDevice, WINDOW_WIDTH, WINDOW_HEIGHT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	mDepthImageView = new ImageViewWrapper(mLogicalDevice, mDepthImage->GetImage(), VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
 	allocateDynamicBufferTransferSpace();	// Figure out the spacing necessary for aligned memory access of dynamic buffers
 	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
-		mFramebuffers.push_back(new FramebufferWrapper(mLogicalDevice, mSwapchain, mRenderPass, (int)i));
+		mFramebuffers.push_back(new FramebufferWrapper(mLogicalDevice, mSwapchain, mRenderPass, (int)i, mDepthImageView));
 		mCommandBuffers.push_back(new CommandBufferWrapper(mLogicalDevice, mGraphicsCommandPool));
 		mUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)sizeof(mVP), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
 		mDynamicUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)(mModelUniformAlignment * MAX_OBJECTS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
@@ -45,39 +49,28 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	}
 
 	std::vector<Vertex> cubeVertices = {
-		{ { -1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f } },
-		{ {  1.0f, -1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f } },
-		{ { -1.0f,  1.0f,  1.0f }, { 0.0f, 0.0f, 1.0f } },
-		{ {  1.0f,  1.0f,  1.0f }, { 1.0f, 1.0f, 0.0f } },
-		{ { -1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f, 1.0f } },
-		{ {  1.0f, -1.0f, -1.0f }, { 0.0f, 1.0f, 1.0f } },
-		{ { -1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } },
-		{ {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } }
+		{ {  1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f } },
+		{ {  1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f } },
+		{ {  1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 0.0f } },
+		{ { -1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 1.0f } },
+		{ { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f, 1.0f } },
+		{ { -1.0f, -1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } },
+		{ { -1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } }
 	};
 	std::vector<uint32_t> cubeIndices = {
-		//Top
+		4, 2, 0,
+		2, 7, 3,
+		6, 5, 7,
+		1, 7, 5,
+		0, 3, 1,
+		4, 1, 5,
+		4, 6, 2,
 		2, 6, 7,
-		2, 3, 7,
-
-		//Bottom
-		0, 4, 5,
-		0, 1, 5,
-
-		//Left
-		0, 2, 6,
-		0, 4, 6,
-
-		//Right
+		6, 4, 5,
 		1, 3, 7,
-		1, 5, 7,
-
-		//Front
 		0, 2, 3,
-		0, 1, 3,
-
-		//Back
-		4, 6, 7,
-		4, 5, 7
+		4, 0, 1
 	};
 
 	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &cubeVertices, &cubeIndices));
@@ -87,6 +80,8 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 
 	mVP.mProjection = glm::perspective(glm::radians(45.0f), (float)mSwapchain->GetSwapchainExtent().width / (float)mSwapchain->GetSwapchainExtent().height, 0.1f, 1000.0f);
 	mVP.mView = glm::lookAt(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	mVP.mProjection[1][1] *= -1;
 
 	mCurrentFrame = 0;
 }
@@ -111,6 +106,8 @@ Renderer::~Renderer() {
 		delete mUniformBuffers.at(i);
 		delete mCommandBuffers.at(i);
 	}
+	delete mDepthImageView;
+	delete mDepthImage;
 	delete mDescriptorPool;
 	delete mTransferCommandPool;
 	delete mGraphicsCommandPool;
@@ -204,6 +201,8 @@ void Renderer::RecordCommands() {
 		nullptr																// pInheritanceInfo
 	};
 	VkClearValue clearValue = { 0.0f, 0.0f, 0.2f, 1.0f };
+	VkClearValue depthValue; depthValue.depthStencil.depth = 1.0f;
+	std::vector<VkClearValue> clearValues = { clearValue, depthValue };
 	VkRenderPassBeginInfo renderPassBI = {
 		VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,							// sType
 		nullptr,															// pNext
@@ -219,8 +218,8 @@ void Renderer::RecordCommands() {
 				mSwapchain->GetSwapchainExtent().height						// height
 			}
 		},
-		1,																	// clearValueCount
-		&clearValue															// pClearValues
+		clearValues.size(),													// clearValueCount
+		clearValues.data()													// pClearValues
 	};
 
 	for (size_t i = 0; i < mCommandBuffers.size(); i++) {

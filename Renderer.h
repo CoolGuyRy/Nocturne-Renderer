@@ -1,6 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -28,6 +30,8 @@ class Mesh;
 class DescriptorSetLayoutWrapper;
 class DescriptorPoolWrapper;
 class DescriptorSetWrapper;
+class ImageWrapper;
+class ImageViewWrapper;
 
 struct UboViewProjection {
 	glm::mat4 mProjection;
@@ -75,6 +79,8 @@ private:
 	CommandPoolWrapper* mGraphicsCommandPool;
 	CommandPoolWrapper* mTransferCommandPool;
 	DescriptorPoolWrapper* mDescriptorPool;
+	ImageWrapper* mDepthImage;
+	ImageViewWrapper* mDepthImageView;
 	std::vector<CommandBufferWrapper*> mCommandBuffers;
 	std::vector<SemaphoreWrapper*> mImageAvailableSemaphores;
 	std::vector<SemaphoreWrapper*> mRenderFinishedSemaphores;
