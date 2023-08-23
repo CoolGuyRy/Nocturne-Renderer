@@ -104,8 +104,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.250.1\Include;$(SolutionDir)Libraries\GLFW\GLFW\include;$(SolutionDir)Libraries\GLM\GLM;$(SolutionDir)Libraries\ASSIMP\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Libraries;C:\VulkanSDK\1.3.250.1\Include;$(SolutionDir)Libraries\GLFW\GLFW\include;$(SolutionDir)Libraries\GLM\GLM;$(SolutionDir)Libraries\ASSIMP\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -172,6 +173,7 @@
     <ClCompile Include="PipelineWrapper.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RenderPassWrapper.cpp" />
+    <ClCompile Include="SamplerWrapper.cpp" />
     <ClCompile Include="ShaderWrapper.cpp" />
     <ClCompile Include="SurfaceWrapper.cpp" />
     <ClCompile Include="SwapchainWrapper.cpp" />
@@ -188,12 +190,14 @@
     <ClInclude Include="ImageViewWrapper.h" />
     <ClInclude Include="ImageWrapper.h" />
     <ClInclude Include="InstanceWrapper.h" />
+    <ClInclude Include="Libraries\stb_image.h" />
     <ClInclude Include="LogicalDeviceWrapper.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PhysicalDeviceWrapper.h" />
     <ClInclude Include="PipelineWrapper.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RenderPassWrapper.h" />
+    <ClInclude Include="SamplerWrapper.h" />
     <ClInclude Include="ShaderWrapper.h" />
     <ClInclude Include="SurfaceWrapper.h" />
     <ClInclude Include="SwapchainWrapper.h" />

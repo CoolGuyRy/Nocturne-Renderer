@@ -15,7 +15,7 @@ FramebufferWrapper::FramebufferWrapper(LogicalDeviceWrapper* lDevice, SwapchainW
 
 
 FramebufferWrapper::~FramebufferWrapper() {
-	vkDestroyFramebuffer(mLogicalDevice->GetLogicalDevice(), mFramebuffer, nullptr);
+	vkDestroyFramebuffer(mLogicalDevice->GetLogicalDevice(), mFramebuffer, nullptr); std::cout << "Success: Framebuffer destroyed." << std::endl;
 }
 
 VkFramebuffer FramebufferWrapper::GetFramebuffer() {

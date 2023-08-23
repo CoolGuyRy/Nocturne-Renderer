@@ -4,6 +4,7 @@
 #include "LogicalDeviceWrapper.h"
 #include "CommandPoolWrapper.h"
 #include "CommandBufferWrapper.h"
+#include "ImageWrapper.h"
 
 BufferWrapper::BufferWrapper(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrapper* lDevice, VkDeviceSize dSize, VkBufferUsageFlags uFlags, VkMemoryPropertyFlags pFlags) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice) {
 	CreateBuffer(dSize, uFlags, pFlags);
@@ -17,7 +18,7 @@ BufferWrapper::~BufferWrapper() {
 void BufferWrapper::MapBufferMemory(void* iData, VkDeviceSize dSize) {
 	void* data;
 	vkMapMemory(mLogicalDevice->GetLogicalDevice(), mBufferMemory, 0, dSize, 0, &data);
-	memcpy(data, iData, (size_t)dSize);
+	memcpy(data, iData, static_cast<size_t>(dSize));
 	vkUnmapMemory(mLogicalDevice->GetLogicalDevice(), mBufferMemory);
 }
 

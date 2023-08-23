@@ -5,16 +5,25 @@
 
 class LogicalDeviceWrapper;
 class BufferWrapper;
+class ImageViewWrapper;
+class SamplerWrapper;
+
+enum DESCRIPTOR_TYPE {
+	GENERIC,
+	DYNAMIC,
+	TEXTURE
+};
 
 class DescriptorSetLayoutWrapper {
 public:
-	DescriptorSetLayoutWrapper(LogicalDeviceWrapper*);
+	DescriptorSetLayoutWrapper(LogicalDeviceWrapper*, DESCRIPTOR_TYPE);
 	~DescriptorSetLayoutWrapper();
 
 	VkDescriptorSetLayout GetDescriptorSetLayout();
 private:
 	void CreateGenericDescriptorSetLayout();
 	void CreateDynamicDescriptorSetLayout();
+	void CreateTextureDescriptorSetLayout();
 
 	VkDescriptorSetLayout mDescriptorSetLayout;
 
@@ -23,13 +32,14 @@ private:
 
 class DescriptorPoolWrapper {
 public:
-	DescriptorPoolWrapper(LogicalDeviceWrapper*);
+	DescriptorPoolWrapper(LogicalDeviceWrapper*, DESCRIPTOR_TYPE);
 	~DescriptorPoolWrapper();
 
 	VkDescriptorPool GetDescriptorPool();
 private:
 	void CreateGenericDescriptorPool();
 	void CreateDynamicDescriptorPool();
+	void CreateTextureDescriptorPool();
 
 	VkDescriptorPool mDescriptorPool;
 	
@@ -38,16 +48,18 @@ private:
 
 class DescriptorSetWrapper {
 public:
-	DescriptorSetWrapper(LogicalDeviceWrapper*, DescriptorSetLayoutWrapper*, DescriptorPoolWrapper*);
+	DescriptorSetWrapper(LogicalDeviceWrapper*, DescriptorSetLayoutWrapper*, DescriptorPoolWrapper*, DESCRIPTOR_TYPE);
 	~DescriptorSetWrapper();
 
 	void WriteGenericDescriptorSet(BufferWrapper*);
 	void WriteDynamicDescriptorSet(BufferWrapper*, BufferWrapper*);
+	void WriteTextureDescriptorSet(ImageViewWrapper*, SamplerWrapper*);
 
 	VkDescriptorSet GetDescriptorSet();
 private:
 	void CreateGenericDescriptorSet();
 	void CreateDynamicDescriptorSet();
+	void CreateTextureDescriptorSet();
 
 	VkDescriptorSet mDescriptorSet;
 

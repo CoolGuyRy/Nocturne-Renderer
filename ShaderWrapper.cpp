@@ -70,11 +70,11 @@ void ShaderWrapper::CreateShaderModule(std::string filename) {
 	}
 
 	VkShaderModuleCreateInfo shaderModuleCI = {
-		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,				// sType
-		nullptr,													// pNext
-		0,															// flags
-		mShaderCode.size(),											// codeSize
-		reinterpret_cast<const uint32_t*>(mShaderCode.data())		// pCode
+		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.codeSize = mShaderCode.size(),
+		.pCode = reinterpret_cast<const uint32_t*>(mShaderCode.data())
 	};
 
 	VkResult result = vkCreateShaderModule(mLogicalDevice->GetLogicalDevice(), &shaderModuleCI, nullptr, &mShaderModule);
@@ -87,12 +87,12 @@ void ShaderWrapper::CreateShaderModule(std::string filename) {
 
 void ShaderWrapper::CreateShaderCI() {
 	mShaderCI = {
-		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,		// sType
-		nullptr,													// pNext
-		0,															// flags
-		mShaderStage,												// stage
-		mShaderModule,												// module
-		"main",														// pName
-		nullptr														// pSpecializationInfo
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.stage = mShaderStage,
+		.module = mShaderModule,
+		.pName = "main",
+		.pSpecializationInfo = nullptr
 	};
 }

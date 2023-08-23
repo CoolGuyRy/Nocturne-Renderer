@@ -4,3 +4,6 @@ TODO Locations
 - PhysicalDeviceWrapper Header
 - SurfaceWrapper Implementation
 - PipelineWrapper Implementation
+
+- Clean up struct init comments
+	current pos: RenderPassWrapper

@@ -2,9 +2,23 @@
 #include "globals.h"
 #include "LogicalDeviceWrapper.h"
 #include "BufferWrapper.h"
+#include "ImageViewWrapper.h"
+#include "SamplerWrapper.h"
 
-DescriptorSetLayoutWrapper::DescriptorSetLayoutWrapper(LogicalDeviceWrapper* lDevice) : mLogicalDeviceWrapper(lDevice) {
-	CreateDynamicDescriptorSetLayout();
+DescriptorSetLayoutWrapper::DescriptorSetLayoutWrapper(LogicalDeviceWrapper* lDevice, DESCRIPTOR_TYPE type) : mLogicalDeviceWrapper(lDevice) {
+	switch (type) {
+		case GENERIC:
+			CreateGenericDescriptorSetLayout();
+			break;
+		case DYNAMIC:
+			CreateDynamicDescriptorSetLayout();
+			break;
+		case TEXTURE:
+			CreateTextureDescriptorSetLayout();
+			break;
+		default:
+			throw std::runtime_error("Designated an incorrect DESCRIPTOR_TYPE value!");
+	}
 }
 
 DescriptorSetLayoutWrapper::~DescriptorSetLayoutWrapper() {
@@ -41,9 +55,9 @@ void DescriptorSetLayoutWrapper::CreateGenericDescriptorSetLayout() {
 
 	VkResult result = vkCreateDescriptorSetLayout(mLogicalDeviceWrapper->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
 	if (result == VK_SUCCESS) {
-		std::cout << "Success: Descriptor Set Layout created." << std::endl;
+		std::cout << "Success: Generic Descriptor Set Layout created." << std::endl;
 	} else {
-		throw std::runtime_error("Failed to create Descriptor Set Layout! Error Code: " + NT_CHECK_RESULT(result));
+		throw std::runtime_error("Failed to create Generic Descriptor Set Layout! Error Code: " + NT_CHECK_RESULT(result));
 	}
 }
 
@@ -83,14 +97,52 @@ void DescriptorSetLayoutWrapper::CreateDynamicDescriptorSetLayout() {
 
 	VkResult result = vkCreateDescriptorSetLayout(mLogicalDeviceWrapper->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
 	if (result == VK_SUCCESS) {
-		std::cout << "Success: Descriptor Set Layout created." << std::endl;
+		std::cout << "Success: Dynamic Descriptor Set Layout created." << std::endl;
 	} else {
-		throw std::runtime_error("Failed to create Descriptor Set Layout! Error Code: " + NT_CHECK_RESULT(result));
+		throw std::runtime_error("Failed to create Dynamic Descriptor Set Layout! Error Code: " + NT_CHECK_RESULT(result));
 	}
 }
 
-DescriptorPoolWrapper::DescriptorPoolWrapper(LogicalDeviceWrapper* lDevice) : mLogicalDevice(lDevice) {
-	CreateDynamicDescriptorPool();
+void DescriptorSetLayoutWrapper::CreateTextureDescriptorSetLayout() {
+	// Texture Sampler Descriptor Set Layout Binding
+	VkDescriptorSetLayoutBinding textureSamplerLayoutBinding = {
+		.binding = 0,
+		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+		.pImmutableSamplers = nullptr
+	};
+
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.bindingCount = 1,
+		.pBindings = &textureSamplerLayoutBinding
+	};
+
+	VkResult result = vkCreateDescriptorSetLayout(mLogicalDeviceWrapper->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Texture Descriptor Set Layout created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create Texture Descriptor Set! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+
+DescriptorPoolWrapper::DescriptorPoolWrapper(LogicalDeviceWrapper* lDevice, DESCRIPTOR_TYPE type) : mLogicalDevice(lDevice) {
+	switch (type) {
+	case GENERIC:
+		CreateGenericDescriptorPool();
+		break;
+	case DYNAMIC:
+		CreateDynamicDescriptorPool();
+		break;
+	case TEXTURE:
+		CreateTextureDescriptorPool();
+		break;
+	default:
+		throw std::runtime_error("Designated an incorrect DESCRIPTOR_TYPE value!");
+	}
 }
 
 DescriptorPoolWrapper::~DescriptorPoolWrapper() {
@@ -154,8 +206,41 @@ void DescriptorPoolWrapper::CreateDynamicDescriptorPool() {
 	}
 }
 
-DescriptorSetWrapper::DescriptorSetWrapper(LogicalDeviceWrapper* lDevice , DescriptorSetLayoutWrapper* layout, DescriptorPoolWrapper* pool) : mLogicalDevice(lDevice), mDescriptorSetLayout(layout), mDescriptorPool(pool) {
-	CreateGenericDescriptorSet();
+void DescriptorPoolWrapper::CreateTextureDescriptorPool() {
+	VkDescriptorPoolSize texturePoolSize = {
+		.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.descriptorCount = MAX_OBJECTS
+	};
+
+	VkDescriptorPoolCreateInfo texturePoolCI = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		.maxSets = MAX_OBJECTS,
+		.poolSizeCount = 1,
+		.pPoolSizes = &texturePoolSize
+	};
+
+	VkResult result = vkCreateDescriptorPool(mLogicalDevice->GetLogicalDevice(), &texturePoolCI, nullptr, &mDescriptorPool);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Texture Descriptor Pool created!" << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create Texture Descriptor Pool! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+
+DescriptorSetWrapper::DescriptorSetWrapper(LogicalDeviceWrapper* lDevice , DescriptorSetLayoutWrapper* layout, DescriptorPoolWrapper* pool, DESCRIPTOR_TYPE type) : mLogicalDevice(lDevice), mDescriptorSetLayout(layout), mDescriptorPool(pool) {
+	switch (type) {
+		case GENERIC:
+			CreateGenericDescriptorSet();
+			break;
+		case DYNAMIC:
+			CreateDynamicDescriptorSet();
+			break;
+		case TEXTURE:
+			CreateTextureDescriptorSet();
+			break;
+	}
 }
 
 DescriptorSetWrapper::~DescriptorSetWrapper() {
@@ -229,6 +314,29 @@ void DescriptorSetWrapper::WriteDynamicDescriptorSet(BufferWrapper* viewProj, Bu
 	vkUpdateDescriptorSets(mLogicalDevice->GetLogicalDevice(), (uint32_t)writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
 }
 
+void DescriptorSetWrapper::WriteTextureDescriptorSet(ImageViewWrapper* imageView, SamplerWrapper* sampler) {
+	VkDescriptorImageInfo imageInfo = {
+		.sampler = sampler->GetSampler(),
+		.imageView = imageView->GetImageView(),
+		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+	};
+
+	VkWriteDescriptorSet descriptorWrite = {
+		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+		.pNext = nullptr,
+		.dstSet = mDescriptorSet,
+		.dstBinding = 0,
+		.dstArrayElement = 0,
+		.descriptorCount = 1,
+		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.pImageInfo = &imageInfo,
+		.pBufferInfo = nullptr,
+		.pTexelBufferView = nullptr
+	};
+
+	vkUpdateDescriptorSets(mLogicalDevice->GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
+}
+
 VkDescriptorSet DescriptorSetWrapper::GetDescriptorSet() {
 	return mDescriptorSet;
 }
@@ -266,6 +374,24 @@ void DescriptorSetWrapper::CreateDynamicDescriptorSet() {
 		mDescriptorPool->GetDescriptorPool(),							// descriptorPool
 		1,																// descriptorSetCount
 		&layout															// pSetLayouts
+	};
+
+	VkResult result = vkAllocateDescriptorSets(mLogicalDevice->GetLogicalDevice(), &descriptorSetAI, &mDescriptorSet);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Descriptor Set allocated." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to allocate Descriptor Set! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+
+void DescriptorSetWrapper::CreateTextureDescriptorSet() {
+	VkDescriptorSetLayout layout = mDescriptorSetLayout->GetDescriptorSetLayout();
+	VkDescriptorSetAllocateInfo descriptorSetAI = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.descriptorPool = mDescriptorPool->GetDescriptorPool(),
+		.descriptorSetCount = 1,
+		.pSetLayouts = &layout
 	};
 
 	VkResult result = vkAllocateDescriptorSets(mLogicalDevice->GetLogicalDevice(), &descriptorSetAI, &mDescriptorSet);

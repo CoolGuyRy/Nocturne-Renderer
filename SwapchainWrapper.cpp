@@ -34,24 +34,27 @@ void SwapchainWrapper::CreateSwapchain() {
 
 	// Describe the swapchain
 	VkSwapchainCreateInfoKHR swapchainCI = {
-		VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,					// sType
-		nullptr,														// pNext
-		0,																// flags
-		mSurface->GetSurface(),											// surface
-		3,																// minImageCount
-		mSurface->GetBestSurfaceFormat().format,						// imageFormat
-		mSurface->GetBestSurfaceFormat().colorSpace,					// imageColorSpace
-		{ WINDOW_WIDTH, WINDOW_HEIGHT },								// imageExtent
-		1,																// imageArrayLayers
-		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,							// imageUsage
-		VK_SHARING_MODE_EXCLUSIVE,										// imageSharingMode
-		0,																// queueFamilyIndexCount
-		nullptr,														// pQueueFamilyIndices
-		VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,							// preTransform
-		VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,								// compositeAlpha
-		mSurface->GetBestPresentMode(),									// presentMode
-		VK_TRUE,														// clipped
-		VK_NULL_HANDLE													// oldSwapchain
+		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+		.pNext = nullptr,
+		.flags = 0,
+		.surface = mSurface->GetSurface(),
+		.minImageCount = 3,
+		.imageFormat = mSurface->GetBestSurfaceFormat().format,
+		.imageColorSpace = mSurface->GetBestSurfaceFormat().colorSpace,
+		.imageExtent = { 
+			.width = WINDOW_WIDTH, 
+			.height = WINDOW_HEIGHT 
+		},
+		.imageArrayLayers = 1,
+		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 0,
+		.pQueueFamilyIndices = nullptr,
+		.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+		.presentMode = mSurface->GetBestPresentMode(),
+		.clipped = VK_TRUE,
+		.oldSwapchain = VK_NULL_HANDLE
 	};
 
 	// Check if the queue families are the same
@@ -77,8 +80,8 @@ void SwapchainWrapper::CreateSwapchain() {
 
 	// Establish the Swapchain Extent
 	mSwapchainExtent = {
-		(uint32_t)WINDOW_WIDTH,
-		(uint32_t)WINDOW_HEIGHT
+		.width = (uint32_t)WINDOW_WIDTH,
+		.height = (uint32_t)WINDOW_HEIGHT
 	};
 
 	// Grab the Swapchain Images

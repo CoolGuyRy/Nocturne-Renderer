@@ -30,28 +30,28 @@ void LogicalDeviceWrapper::CreateLogicalDevice() {
 	// Describe the queues to be created on the logical device
 	float queuePriority = 1.0f;
 	VkDeviceQueueCreateInfo graphicsQueueCI = { 
-		VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,							// sType
-		nullptr,															// pNext
-		0,																	// flags
-		(uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mGraphics,		// queueFamilyIndex
-		1,																	// queueCount
-		&queuePriority														// pQueuePriorities
+		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.queueFamilyIndex = (uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mGraphics,
+		.queueCount = 1,
+		.pQueuePriorities = &queuePriority
 	};
 	VkDeviceQueueCreateInfo presentQueueCI = {
-		VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,							// sType
-		nullptr,															// pNext
-		0,																	// flags
-		(uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mPresent,		// queueFamilyIndex
-		1,																	// queueCount
-		&queuePriority														// pQueuePriorities
+		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.queueFamilyIndex = (uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mPresent,
+		.queueCount = 1,
+		.pQueuePriorities = &queuePriority
 	};
 	VkDeviceQueueCreateInfo transferQueueCI = {
-		VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,							// sType
-		nullptr,															// pNext
-		0,																	// flags
-		(uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mTransfer,		// queueFamilyIndex
-		1,																	// queueCount
-		&queuePriority														// pQueuePriorities
+		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.queueFamilyIndex = (uint32_t)mPhysicalDevice->GetQueueFamilyIndices().mTransfer,
+		.queueCount = 1,
+		.pQueuePriorities = &queuePriority
 	};
 
 	// Create an array to pass to deviceCI
@@ -69,16 +69,16 @@ void LogicalDeviceWrapper::CreateLogicalDevice() {
 
 	// Describe the logical device to be created
 	VkDeviceCreateInfo deviceCI = { 
-		VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,								// sType
-		nullptr,															// pNext
-		0,																	// flags
-		(uint32_t)queueCIs.size(),											// queueCreateInfoCount
-		queueCIs.data(),													// pQueueCreateInfos
-		0,																	// enabledLayerCount (Deprecated)
-		nullptr,															// ppEnabledLayerNames (Deprecated)
-		(uint32_t)ENABLED_LOGICAL_DEVICE_EXTENSIONS.size(),					// enabledExtensionCount
-		ENABLED_LOGICAL_DEVICE_EXTENSIONS.data(),							// ppEnabledExtensionNames
-		&ENABLED_PHYSICAL_DEVICE_FEATURES									// pEnabledFeatures
+		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.queueCreateInfoCount = (uint32_t)queueCIs.size(),
+		.pQueueCreateInfos = queueCIs.data(),
+		.enabledLayerCount = 0,
+		.ppEnabledLayerNames = nullptr,
+		.enabledExtensionCount = (uint32_t)ENABLED_LOGICAL_DEVICE_EXTENSIONS.size(),
+		.ppEnabledExtensionNames = ENABLED_LOGICAL_DEVICE_EXTENSIONS.data(),
+		.pEnabledFeatures = &ENABLED_PHYSICAL_DEVICE_FEATURES
 	};
 
 	// Create the logical device

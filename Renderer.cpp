@@ -18,6 +18,7 @@
 #include "DescriptorSetWrapper.h"
 #include "ImageWrapper.h"
 #include "ImageViewWrapper.h"
+#include "SamplerWrapper.h"
 
 Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	mInstance = new InstanceWrapper();
@@ -26,27 +27,37 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 	mLogicalDevice = new LogicalDeviceWrapper(mPhysicalDevice);
 	mSwapchain = new SwapchainWrapper(mPhysicalDevice, mLogicalDevice, mSurface);
 	mRenderPass = new RenderPassWrapper(mLogicalDevice, mSurface);
-	mDescriptorSetLayout = new DescriptorSetLayoutWrapper(mLogicalDevice);
-	mPipeline = new PipelineWrapper(mLogicalDevice, mRenderPass, mDescriptorSetLayout);
+	mDescriptorSetLayout = new DescriptorSetLayoutWrapper(mLogicalDevice, DYNAMIC);
+	mTSDescriptorSetLayout = new DescriptorSetLayoutWrapper(mLogicalDevice, TEXTURE);
+	std::vector<DescriptorSetLayoutWrapper*> layouts = { mDescriptorSetLayout, mTSDescriptorSetLayout };
+	mPipeline = new PipelineWrapper(mLogicalDevice, mRenderPass, layouts);
 	mGraphicsCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mGraphics);
 	mTransferCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mTransfer);
-	mDescriptorPool = new DescriptorPoolWrapper(mLogicalDevice);
-	mDepthImage = new ImageWrapper(mPhysicalDevice, mLogicalDevice, WINDOW_WIDTH, WINDOW_HEIGHT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	mDescriptorPool = new DescriptorPoolWrapper(mLogicalDevice, DYNAMIC);
+	mTDescriptorPool = new DescriptorPoolWrapper(mLogicalDevice, TEXTURE);
+	mDepthImage = new ImageWrapper(mPhysicalDevice, mLogicalDevice, mGraphicsCommandPool, WINDOW_WIDTH, WINDOW_HEIGHT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	mDepthImageView = new ImageViewWrapper(mLogicalDevice, mDepthImage->GetImage(), VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
+	mTextureImage = new ImageWrapper(mPhysicalDevice, mLogicalDevice, mGraphicsCommandPool, ".\\Resources\\Textures\\container2.png");
+	mTextureImageView = new ImageViewWrapper(mLogicalDevice, mTextureImage->GetImage(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 	allocateDynamicBufferTransferSpace();	// Figure out the spacing necessary for aligned memory access of dynamic buffers
 	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
 		mFramebuffers.push_back(new FramebufferWrapper(mLogicalDevice, mSwapchain, mRenderPass, (int)i, mDepthImageView));
 		mCommandBuffers.push_back(new CommandBufferWrapper(mLogicalDevice, mGraphicsCommandPool));
 		mUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)sizeof(mVP), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
 		mDynamicUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)(mModelUniformAlignment * MAX_OBJECTS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
-		mDescriptorSets.push_back(new DescriptorSetWrapper(mLogicalDevice, mDescriptorSetLayout, mDescriptorPool));
+		mDescriptorSets.push_back(new DescriptorSetWrapper(mLogicalDevice, mDescriptorSetLayout, mDescriptorPool, DYNAMIC));
 		mDescriptorSets.at(i)->WriteDynamicDescriptorSet(mUniformBuffers.at(i), mDynamicUniformBuffers.at(i));
 	}
+
 	for (size_t i = 0; i < MAX_FRAMES_DRAW; i++) {
 		mImageAvailableSemaphores.push_back(new SemaphoreWrapper(mLogicalDevice));
 		mRenderFinishedSemaphores.push_back(new SemaphoreWrapper(mLogicalDevice));
 		mDrawFences.push_back(new FenceWrapper(mLogicalDevice, VK_FENCE_CREATE_SIGNALED_BIT));
 	}
+	mSampler = new SamplerWrapper(mLogicalDevice);
+
+	mTextureDescriptorSet = new DescriptorSetWrapper(mLogicalDevice, mTSDescriptorSetLayout, mTDescriptorPool, TEXTURE);
+	mTextureDescriptorSet->WriteTextureDescriptorSet(mTextureImageView, mSampler);
 
 	std::vector<Vertex> cubeVertices = {
 		{ {  1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f } },
@@ -73,8 +84,21 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 		4, 0, 1
 	};
 
+	std::vector<Vertex> texturedMeshVertices = {
+		{ {-1.0f,  1.0f, 0.0}, {5.0, 0.0, 0.0}, { 1.0f, 1.0f }},	// 0
+		{ {-1.0f, -1.0f, 0.0}, {5.0, 0.0, 0.0}, { 1.0f, 0.0f }},	// 1
+		{ { 1.0f, -1.0f, 0.0}, {5.0, 0.0, 0.0}, { 0.0f, 0.0f }},	// 2
+		{ { 1.0f,  1.0f, 0.0}, {5.0, 0.0, 0.0}, { 0.0f, 1.0f }},	// 3
+	};
+
+	std::vector<uint32_t> texturedMeshIndices = {
+		0, 1, 2,
+		2, 3, 0
+	};
+
 	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &cubeVertices, &cubeIndices));
 	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &cubeVertices, &cubeIndices));
+	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &texturedMeshVertices, &texturedMeshIndices));
 
 	RecordCommands();
 
@@ -95,6 +119,7 @@ Renderer::~Renderer() {
 	for (size_t i = 0; i < mMeshList.size(); i++) {
 		delete mMeshList.at(i);
 	}
+	delete mSampler;
 	for (size_t i = 0; i < MAX_FRAMES_DRAW; i++) {
 		delete mDrawFences.at(i);
 		delete mRenderFinishedSemaphores.at(i);
@@ -106,8 +131,11 @@ Renderer::~Renderer() {
 		delete mUniformBuffers.at(i);
 		delete mCommandBuffers.at(i);
 	}
+	delete mTextureImageView;
+	delete mTextureImage;
 	delete mDepthImageView;
 	delete mDepthImage;
+	delete mTDescriptorPool;
 	delete mDescriptorPool;
 	delete mTransferCommandPool;
 	delete mGraphicsCommandPool;
@@ -115,6 +143,7 @@ Renderer::~Renderer() {
 		delete mFramebuffers.at(i);
 	}
 	delete mPipeline;
+	delete mTSDescriptorSetLayout;
 	delete mDescriptorSetLayout;
 	delete mRenderPass;
 	delete mSwapchain;
@@ -152,15 +181,15 @@ void Renderer::Draw() {
 	VkSemaphore signalSemaphore = mRenderFinishedSemaphores.at(mCurrentFrame)->GetSemaphore();
 
 	VkSubmitInfo queueSI = {
-		VK_STRUCTURE_TYPE_SUBMIT_INFO,										// sType
-		nullptr,															// pNext
-		1,																	// waitSemaphoreCount
-		&waitSemaphore,														// pWaitSemaphores
-		waitStages,															// pWaitDstStageMask
-		1,																	// commandBufferCount
-		&commandBuffer,														// pCommandBuffers
-		1,																	// signalSemaphoreCount
-		&signalSemaphore													// pSignalSemaphores
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.pNext = nullptr,
+		.waitSemaphoreCount = 1,
+		.pWaitSemaphores = &waitSemaphore,
+		.pWaitDstStageMask = waitStages,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &commandBuffer,
+		.signalSemaphoreCount = 1,
+		.pSignalSemaphores = &signalSemaphore
 	};
 
 	VkResult result = vkQueueSubmit(mLogicalDevice->GetGraphicsQueue(), 1, &queueSI, mDrawFences.at(mCurrentFrame)->GetFence());
@@ -170,13 +199,13 @@ void Renderer::Draw() {
 
 	VkSwapchainKHR swapchain= mSwapchain->GetSwapchain();
 	VkPresentInfoKHR presentInfo = {
-		VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,									// sType
-		nullptr,															// pNext
-		1,																	// waitSemaphoreCount
-		&signalSemaphore,													// pWaitSemaphores
-		1,																	// swapchainCount
-		&swapchain,															// pSwapchains
-		&imageIndex															// pImageIndices
+		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+		.pNext = nullptr,
+		.waitSemaphoreCount = 1,
+		.pWaitSemaphores = &signalSemaphore,
+		.swapchainCount = 1,
+		.pSwapchains = &swapchain,
+		.pImageIndices = &imageIndex
 	};
 
 	result = vkQueuePresentKHR(mLogicalDevice->GetPresentQueue(), &presentInfo);
@@ -193,33 +222,37 @@ void Renderer::UpdateModel(int modelID, glm::mat4 model) {
 	mMeshList.at(modelID)->SetModel(model);
 }
 
+void Renderer::UpdateCamera(glm::mat4 view) {
+	mVP.mView = view;
+}
+
 void Renderer::RecordCommands() {
 	VkCommandBufferBeginInfo commandBufferBI = {
-		VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,						// sType
-		nullptr,															// pNext
-		VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,						// flags
-		nullptr																// pInheritanceInfo
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.pNext = nullptr,
+		.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+		.pInheritanceInfo = nullptr
 	};
 	VkClearValue clearValue = { 0.0f, 0.0f, 0.2f, 1.0f };
-	VkClearValue depthValue; depthValue.depthStencil.depth = 1.0f;
+	VkClearValue depthValue = { }; depthValue.depthStencil.depth = 1.0f;
 	std::vector<VkClearValue> clearValues = { clearValue, depthValue };
 	VkRenderPassBeginInfo renderPassBI = {
-		VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,							// sType
-		nullptr,															// pNext
-		mRenderPass->GetRenderPass(),										// renderPass
-		VK_NULL_HANDLE,														// framebuffer
-		{																	// renderArea
-			{																// offset
-				0,															// x
-				0															// y
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+		.pNext = nullptr,
+		.renderPass = mRenderPass->GetRenderPass(),
+		.framebuffer = VK_NULL_HANDLE,
+		.renderArea = {
+			.offset = {
+				.x = 0,
+				.y = 0
 			},
-			{																// extent
-				mSwapchain->GetSwapchainExtent().width,						// width
-				mSwapchain->GetSwapchainExtent().height						// height
+			.extent = {
+				.width = mSwapchain->GetSwapchainExtent().width,
+				.height = mSwapchain->GetSwapchainExtent().height
 			}
 		},
-		clearValues.size(),													// clearValueCount
-		clearValues.data()													// pClearValues
+		.clearValueCount = (uint32_t)clearValues.size(),
+		.pClearValues = clearValues.data()
 	};
 
 	for (size_t i = 0; i < mCommandBuffers.size(); i++) {
@@ -245,9 +278,9 @@ void Renderer::RecordCommands() {
 
 					uint32_t dynamicOffset = (uint32_t)(mModelUniformAlignment * j);
 
-					VkDescriptorSet descriptorSet = mDescriptorSets.at(i)->GetDescriptorSet();
+					std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.at(i)->GetDescriptorSet(), mTextureDescriptorSet->GetDescriptorSet()};
 						
-					vkCmdBindDescriptorSets(mCommandBuffers.at(i)->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipelineLayout(), 0, 1, &descriptorSet, 1, &dynamicOffset);
+					vkCmdBindDescriptorSets(mCommandBuffers.at(i)->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipelineLayout(), 0, descriptorSets.size(), descriptorSets.data(), 1, &dynamicOffset);
 				
 					vkCmdDrawIndexed(mCommandBuffers.at(i)->GetCommandBuffer(), mMeshList.at(j)->GetIndexCount(), 1, 0, 0, 0);
 				}

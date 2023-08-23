@@ -6,7 +6,7 @@
 #include "Mesh.h"
 #include "DescriptorSetWrapper.h"
 
-PipelineWrapper::PipelineWrapper(LogicalDeviceWrapper* lDevice, RenderPassWrapper* renderpass, DescriptorSetLayoutWrapper* layout) : mLogicalDevice(lDevice), mRenderPass(renderpass), mDescriptorSetLayout(layout) {
+PipelineWrapper::PipelineWrapper(LogicalDeviceWrapper* lDevice, RenderPassWrapper* renderpass, std::vector<DescriptorSetLayoutWrapper*> layouts) : mLogicalDevice(lDevice), mRenderPass(renderpass), mDescriptorSetLayouts(layouts) {
 	CreateDepthGraphicsPipeline();
 }
 
@@ -175,13 +175,19 @@ void PipelineWrapper::CreateGenericGraphicsPipeline() {
 	};
 
 	// Create the pipeline layout create info struct
-	VkDescriptorSetLayout layout = mDescriptorSetLayout->GetDescriptorSetLayout();
+
+	std::vector<VkDescriptorSetLayout> layouts;
+
+	for (auto& layout : mDescriptorSetLayouts) {
+		layouts.push_back(layout->GetDescriptorSetLayout());
+	}
+
 	VkPipelineLayoutCreateInfo pipelineLayoutCI = {
 		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,						// sType
 		nullptr,															// pNext
 		0,																	// flags
-		1,																	// setLayoutCount
-		&layout,															// pSetLayouts
+		(uint32_t)layouts.size(),											// setLayoutCount
+		layouts.data(),														// pSetLayouts
 		0,																	// pushConstantRangeCount
 		nullptr																// pPushConstantRanges
 	};
@@ -262,20 +268,30 @@ void PipelineWrapper::CreateDepthGraphicsPipeline() {
 	// Describe the position attribute
 	attributeDescriptions.push_back(
 		{
-			0,																// location
-			vertexInputBindingDescription.binding,							// binding
-			VK_FORMAT_R32G32B32_SFLOAT,										// format
-			offsetof(Vertex, mPosition)										// offset
+			.location = 0,
+			.binding = vertexInputBindingDescription.binding,
+			.format = VK_FORMAT_R32G32B32A32_SFLOAT,
+			.offset = offsetof(Vertex, mPosition)
 		}
 	);
 
 	// Describe the color attribute
 	attributeDescriptions.push_back(
 		{
-			1,																// location
-			vertexInputBindingDescription.binding,							// binding
-			VK_FORMAT_R32G32B32_SFLOAT,										// format
-			offsetof(Vertex, mColor)										// offset
+			.location = 1,
+			.binding = vertexInputBindingDescription.binding,
+			.format = VK_FORMAT_R32G32B32A32_SFLOAT,
+			.offset = offsetof(Vertex, mColor)
+		}
+	);
+
+	// Describe the UV attributs
+	attributeDescriptions.push_back(
+		{
+			.location = 2,
+			.binding = vertexInputBindingDescription.binding,
+			.format = VK_FORMAT_R32G32_SFLOAT,
+			.offset = offsetof(Vertex, mUV)
 		}
 	);
 
@@ -330,7 +346,7 @@ void PipelineWrapper::CreateDepthGraphicsPipeline() {
 		VK_FALSE,															// depthClampEnable
 		VK_FALSE,															// rasterizerDiscardEnable
 		VK_POLYGON_MODE_FILL,												// polygonMode
-		VK_CULL_MODE_BACK_BIT,												// cullMode
+		VK_CULL_MODE_NONE, //VK_CULL_MODE_BACK_BIT,							// cullMode
 		VK_FRONT_FACE_COUNTER_CLOCKWISE,									// frontFace
 		VK_FALSE,															// depthBiasEnable
 		0.0f,																// depthBiasConstantFactor
@@ -401,13 +417,19 @@ void PipelineWrapper::CreateDepthGraphicsPipeline() {
 	};
 
 	// Create the pipeline layout create info struct
-	VkDescriptorSetLayout layout = mDescriptorSetLayout->GetDescriptorSetLayout();
+
+	std::vector<VkDescriptorSetLayout> layouts;
+
+	for (auto& layout : mDescriptorSetLayouts) {
+		layouts.push_back(layout->GetDescriptorSetLayout());
+	}
+
 	VkPipelineLayoutCreateInfo pipelineLayoutCI = {
 		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,						// sType
 		nullptr,															// pNext
 		0,																	// flags
-		1,																	// setLayoutCount
-		&layout,															// pSetLayouts
+		(uint32_t)layouts.size(),											// setLayoutCount
+		layouts.data(),														// pSetLayouts
 		0,																	// pushConstantRangeCount
 		nullptr																// pPushConstantRanges
 	};

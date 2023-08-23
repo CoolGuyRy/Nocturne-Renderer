@@ -32,6 +32,7 @@ class DescriptorPoolWrapper;
 class DescriptorSetWrapper;
 class ImageWrapper;
 class ImageViewWrapper;
+class SamplerWrapper;
 
 struct UboViewProjection {
 	glm::mat4 mProjection;
@@ -52,6 +53,8 @@ public:
 	void Draw();
 
 	void UpdateModel(int, glm::mat4);
+
+	void UpdateCamera(glm::mat4);
 private:
 	void RecordCommands();
 
@@ -79,15 +82,21 @@ private:
 	CommandPoolWrapper* mGraphicsCommandPool;
 	CommandPoolWrapper* mTransferCommandPool;
 	DescriptorPoolWrapper* mDescriptorPool;
+	DescriptorPoolWrapper* mTDescriptorPool;
 	ImageWrapper* mDepthImage;
 	ImageViewWrapper* mDepthImageView;
+	ImageWrapper* mTextureImage;
+	ImageViewWrapper* mTextureImageView;
 	std::vector<CommandBufferWrapper*> mCommandBuffers;
 	std::vector<SemaphoreWrapper*> mImageAvailableSemaphores;
 	std::vector<SemaphoreWrapper*> mRenderFinishedSemaphores;
 	std::vector<FenceWrapper*> mDrawFences;
 	DescriptorSetLayoutWrapper* mDescriptorSetLayout;
+	DescriptorSetLayoutWrapper* mTSDescriptorSetLayout;
 	std::vector<BufferWrapper*> mUniformBuffers;
 	std::vector<BufferWrapper*> mDynamicUniformBuffers;
 	std::vector<DescriptorSetWrapper*> mDescriptorSets;
+	DescriptorSetWrapper* mTextureDescriptorSet;
+	SamplerWrapper* mSampler;
 };
 #endif

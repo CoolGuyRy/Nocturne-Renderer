@@ -7,6 +7,7 @@
 class PhysicalDeviceWrapper;
 class LogicalDeviceWrapper;
 class CommandPoolWrapper;
+class ImageWrapper;
 
 /*
 
@@ -34,5 +35,4 @@ private:
 };
 
 void CopyBuffer(LogicalDeviceWrapper*, CommandPoolWrapper*, BufferWrapper*, BufferWrapper*, VkDeviceSize);
-
 #endif

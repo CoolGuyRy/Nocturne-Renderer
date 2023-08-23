@@ -1,5 +1,6 @@
-#define STB_IMAGE_IMPLEMENTATION
 #define GLFW_INCLUDE_VULKAN
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #include <iostream>
 #include <filesystem>
@@ -68,6 +69,14 @@ int main() {
 			model2 = glm::rotate(model2, -angle, glm::vec3(1.0f, 0.0f, 1.0f));
 
 			gRenderer.UpdateModel(1, model2);
+
+			glm::mat4 view(1.0f);
+
+			view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+
+			view = glm::rotate(view, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+			gRenderer.UpdateCamera(view);
 
 			gRenderer.Draw();
 		}

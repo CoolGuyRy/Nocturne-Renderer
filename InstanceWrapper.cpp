@@ -18,13 +18,13 @@ VkInstance InstanceWrapper::GetInstance() {
 void InstanceWrapper::CreateInstance() {
 	// Set up Application Info Struct
 	VkApplicationInfo applicationInfo = {
-		VK_STRUCTURE_TYPE_APPLICATION_INFO,				// sType
-		nullptr,										// pNext
-		APPLICATION_TITLE.c_str(),						// pApplicationName
-		APPLICATION_VERSION,							// applicationVersion
-		ENGINE_TITLE.c_str(),							// pEngineName
-		ENGINE_VERSION,									// engineVersion
-		VULKAN_API_VERSION								// apiVersion
+		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+		.pNext = nullptr,
+		.pApplicationName = APPLICATION_TITLE.c_str(),
+		.applicationVersion = APPLICATION_VERSION,
+		.pEngineName = ENGINE_TITLE.c_str(),
+		.engineVersion = ENGINE_VERSION,
+		.apiVersion = VULKAN_API_VERSION
 	};
 
 	// Grab GLFW Extensions
@@ -54,14 +54,14 @@ void InstanceWrapper::CreateInstance() {
 
 	// Set Up Instance Create Info
 	VkInstanceCreateInfo instanceCI = {
-		VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,			// sType
-		nullptr,										// pNext
-		0,												// flags
-		&applicationInfo,								// pApplicationInfo
-		0,												// enabledLayerCount
-		nullptr,										// ppEnabledLayerNames
-		(uint32_t)mExtensions.size(),					// enabledExtensionCount
-		mExtensions.data()								// ppEnabledExtensionNames
+		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.pApplicationInfo = &applicationInfo,
+		.enabledLayerCount = 0,
+		.ppEnabledLayerNames = nullptr,
+		.enabledExtensionCount = (uint32_t)mExtensions.size(),
+		.ppEnabledExtensionNames = mExtensions.data()
 	};
 
 	// Add Validation Layers if enabled globally

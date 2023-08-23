@@ -18,7 +18,7 @@ class DescriptorSetLayoutWrapper;
 
 class PipelineWrapper {
 public:
-	PipelineWrapper(LogicalDeviceWrapper*, RenderPassWrapper*, DescriptorSetLayoutWrapper*);
+	PipelineWrapper(LogicalDeviceWrapper*, RenderPassWrapper*, std::vector<DescriptorSetLayoutWrapper*>);
 	~PipelineWrapper();
 
 	VkPipeline GetPipeline();
@@ -33,7 +33,7 @@ private:
 
 	LogicalDeviceWrapper* mLogicalDevice;
 	RenderPassWrapper* mRenderPass;
-	DescriptorSetLayoutWrapper* mDescriptorSetLayout;
+	std::vector<DescriptorSetLayoutWrapper*> mDescriptorSetLayouts;
 };
 
 #endif

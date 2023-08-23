@@ -18,27 +18,27 @@ VkImageView ImageViewWrapper::GetImageView() {
 void ImageViewWrapper::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags flags) {
 	// Describe the ImageView
 	VkComponentMapping imageViewComponentMapping = {
-		VK_COMPONENT_SWIZZLE_IDENTITY,
-		VK_COMPONENT_SWIZZLE_IDENTITY,
-		VK_COMPONENT_SWIZZLE_IDENTITY,
-		VK_COMPONENT_SWIZZLE_IDENTITY
+		.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+		.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+		.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+		.a = VK_COMPONENT_SWIZZLE_IDENTITY
 	};
 	VkImageSubresourceRange imageSubresourceRange = {
-		flags,										// aspectMask
-		0,											// baseMipLevel
-		1,											// levelCount
-		0,											// baseArrayLayer
-		1											// layerCount
+		.aspectMask = flags,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
 	};
 	VkImageViewCreateInfo imageViewCI = {
-		VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,	// sType
-		nullptr,									// pNext
-		0,											// flags
-		image,										// image
-		VK_IMAGE_VIEW_TYPE_2D,						// viewType
-		format,										// format
-		imageViewComponentMapping,					// components
-		imageSubresourceRange						// subresourceRange
+		.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.image = image,
+		.viewType = VK_IMAGE_VIEW_TYPE_2D,
+		.format = format,
+		.components = imageViewComponentMapping,
+		.subresourceRange = imageSubresourceRange
 	};
 
 	// Create the ImageView
