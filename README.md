@@ -34,6 +34,10 @@ Finally, work on optimizing the renderer. This can involve techniques like frust
 
 ## Screenshots
 
+Depth Buffer + Dynamic Uniform Buffer Demo!
+
+https://github.com/CoolGuyRy/Nocturne-Renderer/assets/86322787/97305d10-8018-4975-8df7-e8cbf206727b
+
 First ever Render run with the Nocturne Renderer!
 ![First Run Screenshot](https://github.com/CoolGuyRy/Nocturne-Renderer/assets/86322787/46bb09b0-04c9-45b2-956d-863b618a4a40)
 
