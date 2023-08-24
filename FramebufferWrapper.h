@@ -4,9 +4,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-class LogicalDeviceWrapper;
-class SwapchainWrapper;
-class RenderPassWrapper;
+class Context;
 class ImageViewWrapper;
 
 /*
@@ -17,8 +15,8 @@ class ImageViewWrapper;
 
 class FramebufferWrapper {
 public:
-	FramebufferWrapper(LogicalDeviceWrapper*, SwapchainWrapper*, RenderPassWrapper*, int);
-	FramebufferWrapper(LogicalDeviceWrapper*, SwapchainWrapper*, RenderPassWrapper*, int, ImageViewWrapper*);
+	FramebufferWrapper(Context*, int);
+	FramebufferWrapper(Context*, int, ImageViewWrapper*);
 	~FramebufferWrapper();
 
 	VkFramebuffer GetFramebuffer();
@@ -28,9 +26,7 @@ private:
 
 	VkFramebuffer mFramebuffer;
 
-	LogicalDeviceWrapper* mLogicalDevice;
-	SwapchainWrapper* mSwapchain;
-	RenderPassWrapper* mRenderPass;
+	Context* mContext;
 };
 
 #endif

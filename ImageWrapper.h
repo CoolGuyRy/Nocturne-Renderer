@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <string>
 
+class Context;
 class LogicalDeviceWrapper;
 class PhysicalDeviceWrapper;
 class CommandPoolWrapper;
@@ -21,8 +22,8 @@ class BufferWrapper;
 
 class ImageWrapper {
 public:
-	ImageWrapper(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, CommandPoolWrapper*, uint32_t, uint32_t, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags);
-	ImageWrapper(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, CommandPoolWrapper*, std::string);
+	ImageWrapper(Context*, CommandPoolWrapper*, uint32_t, uint32_t, VkFormat, VkImageTiling, VkImageUsageFlags, VkMemoryPropertyFlags);
+	ImageWrapper(Context*, CommandPoolWrapper*, std::string);
 	~ImageWrapper();
 
 	VkImage GetImage();
@@ -33,12 +34,11 @@ private:
 	VkImage mImage;
 	VkDeviceMemory mImageMemory;
 
-	PhysicalDeviceWrapper* mPhysicalDevice;
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 	CommandPoolWrapper* mGraphicsCommandPool;
 };
 
 stbi_uc* LoadTextureFile(std::string filename, int* width, int* height, VkDeviceSize* imageSize);
-void CopyImageBuffer(LogicalDeviceWrapper*, CommandPoolWrapper*, BufferWrapper*, ImageWrapper*, uint32_t, uint32_t);
-void TransitionImageLayout(LogicalDeviceWrapper*, CommandPoolWrapper*, ImageWrapper*, VkImageLayout, VkImageLayout);
+void CopyImageBuffer(Context*, CommandPoolWrapper*, BufferWrapper*, ImageWrapper*, uint32_t, uint32_t);
+void TransitionImageLayout(Context*, CommandPoolWrapper*, ImageWrapper*, VkImageLayout, VkImageLayout);
 #endif

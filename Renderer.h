@@ -11,14 +11,8 @@
 #include <vector>
 #include <iostream>
 
-class WindowWrapper;
-class InstanceWrapper;
-class SurfaceWrapper;
-class PhysicalDeviceWrapper;
-class LogicalDeviceWrapper;
-class SwapchainWrapper;
+class Context;
 class ShaderWrapper;
-class RenderPassWrapper;
 class PipelineWrapper;
 class FramebufferWrapper;
 class CommandPoolWrapper;
@@ -47,7 +41,7 @@ struct UboViewProjection {
 
 class Renderer {
 public:
-	Renderer(WindowWrapper*);
+	Renderer();
 	~Renderer();
 
 	void Draw();
@@ -55,6 +49,8 @@ public:
 	void UpdateModel(int, glm::mat4);
 
 	void UpdateCamera(glm::mat4);
+
+	Context* GetContext();
 private:
 	void RecordCommands();
 
@@ -70,13 +66,7 @@ private:
 	size_t mModelUniformAlignment;
 	glm::mat4* mModelTransferSpace;
 
-	WindowWrapper* mWindow;
-	InstanceWrapper* mInstance;
-	SurfaceWrapper* mSurface;
-	PhysicalDeviceWrapper* mPhysicalDevice;
-	LogicalDeviceWrapper* mLogicalDevice;
-	SwapchainWrapper* mSwapchain;
-	RenderPassWrapper* mRenderPass;
+	Context* mContext;
 	PipelineWrapper* mPipeline;
 	std::vector<FramebufferWrapper*> mFramebuffers;
 	CommandPoolWrapper* mGraphicsCommandPool;

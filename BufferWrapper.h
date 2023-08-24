@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vulkan/vulkan.h>
 
+class Context;
 class PhysicalDeviceWrapper;
 class LogicalDeviceWrapper;
 class CommandPoolWrapper;
@@ -17,7 +18,7 @@ class ImageWrapper;
 
 class BufferWrapper {
 public:
-	BufferWrapper(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags);
+	BufferWrapper(Context*, VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags);
 	~BufferWrapper();
 
 	void MapBufferMemory(void* data, VkDeviceSize dSize);
@@ -30,9 +31,8 @@ private:
 	VkBuffer mBuffer;
 	VkDeviceMemory mBufferMemory;
 
-	PhysicalDeviceWrapper* mPhysicalDevice;
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 };
 
-void CopyBuffer(LogicalDeviceWrapper*, CommandPoolWrapper*, BufferWrapper*, BufferWrapper*, VkDeviceSize);
+void CopyBuffer(Context*, CommandPoolWrapper*, BufferWrapper*, BufferWrapper*, VkDeviceSize);
 #endif

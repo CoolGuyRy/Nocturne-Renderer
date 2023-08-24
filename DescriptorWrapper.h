@@ -1,8 +1,9 @@
-#ifndef DESCRIPTOR_SET_WRAPPER
-#define DESCRIPTOR_SET_WRAPPER
+#ifndef DESCRIPTOR_WRAPPER
+#define DESCRIPTOR_WRAPPER
 
 #include <vulkan/vulkan.h>
 
+class Context;
 class LogicalDeviceWrapper;
 class BufferWrapper;
 class ImageViewWrapper;
@@ -16,7 +17,7 @@ enum DESCRIPTOR_TYPE {
 
 class DescriptorSetLayoutWrapper {
 public:
-	DescriptorSetLayoutWrapper(LogicalDeviceWrapper*, DESCRIPTOR_TYPE);
+	DescriptorSetLayoutWrapper(Context* , DESCRIPTOR_TYPE);
 	~DescriptorSetLayoutWrapper();
 
 	VkDescriptorSetLayout GetDescriptorSetLayout();
@@ -27,12 +28,12 @@ private:
 
 	VkDescriptorSetLayout mDescriptorSetLayout;
 
-	LogicalDeviceWrapper* mLogicalDeviceWrapper;
+	Context* mContext;
 };
 
 class DescriptorPoolWrapper {
 public:
-	DescriptorPoolWrapper(LogicalDeviceWrapper*, DESCRIPTOR_TYPE);
+	DescriptorPoolWrapper(Context*, DESCRIPTOR_TYPE);
 	~DescriptorPoolWrapper();
 
 	VkDescriptorPool GetDescriptorPool();
@@ -43,12 +44,12 @@ private:
 
 	VkDescriptorPool mDescriptorPool;
 	
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 };
 
 class DescriptorSetWrapper {
 public:
-	DescriptorSetWrapper(LogicalDeviceWrapper*, DescriptorSetLayoutWrapper*, DescriptorPoolWrapper*, DESCRIPTOR_TYPE);
+	DescriptorSetWrapper(Context*, DescriptorSetLayoutWrapper*, DescriptorPoolWrapper*, DESCRIPTOR_TYPE);
 	~DescriptorSetWrapper();
 
 	void WriteGenericDescriptorSet(BufferWrapper*);
@@ -63,7 +64,7 @@ private:
 
 	VkDescriptorSet mDescriptorSet;
 
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 	DescriptorSetLayoutWrapper* mDescriptorSetLayout;
 	DescriptorPoolWrapper* mDescriptorPool;
 };

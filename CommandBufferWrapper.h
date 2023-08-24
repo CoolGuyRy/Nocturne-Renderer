@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
+class Context;
 class LogicalDeviceWrapper;
 class CommandPoolWrapper;
 
@@ -14,7 +15,7 @@ class CommandPoolWrapper;
 
 class CommandBufferWrapper {
 public:
-	CommandBufferWrapper(LogicalDeviceWrapper*, CommandPoolWrapper*);
+	CommandBufferWrapper(Context*, CommandPoolWrapper*);
 	~CommandBufferWrapper();
 
 	VkCommandBuffer GetCommandBuffer();
@@ -23,7 +24,7 @@ private:
 
 	VkCommandBuffer mCommandBuffer;
 
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 	CommandPoolWrapper* mCommandPool;
 };
 

@@ -1,21 +1,22 @@
 #include "FramebufferWrapper.h"
 #include "globals.h"
+#include "Context.h"
 #include "LogicalDeviceWrapper.h"
 #include "SwapchainWrapper.h"
 #include "ImageViewWrapper.h"
 #include "RenderPassWrapper.h"
 
-FramebufferWrapper::FramebufferWrapper(LogicalDeviceWrapper* lDevice, SwapchainWrapper* swapchain, RenderPassWrapper* renderpass, int index) : mLogicalDevice(lDevice), mSwapchain(swapchain), mRenderPass(renderpass) {
+FramebufferWrapper::FramebufferWrapper(Context* context, int index) : mContext(context) {
 	CreateFramebuffer(index);
 }
 
-FramebufferWrapper::FramebufferWrapper(LogicalDeviceWrapper* lDevice, SwapchainWrapper* swapchain, RenderPassWrapper* renderpass, int index, ImageViewWrapper* imageView) : mLogicalDevice(lDevice), mSwapchain(swapchain), mRenderPass(renderpass) {
+FramebufferWrapper::FramebufferWrapper(Context* context, int index, ImageViewWrapper* imageView) : mContext(context) {
 	CreateFramebuffer(index, imageView);
 }
 
 
 FramebufferWrapper::~FramebufferWrapper() {
-	vkDestroyFramebuffer(mLogicalDevice->GetLogicalDevice(), mFramebuffer, nullptr); std::cout << "Success: Framebuffer destroyed." << std::endl;
+	vkDestroyFramebuffer(mContext->mLogicalDevice->GetLogicalDevice(), mFramebuffer, nullptr); std::cout << "Success: Framebuffer destroyed." << std::endl;
 }
 
 VkFramebuffer FramebufferWrapper::GetFramebuffer() {
@@ -24,21 +25,21 @@ VkFramebuffer FramebufferWrapper::GetFramebuffer() {
 
 void FramebufferWrapper::CreateFramebuffer(int index) {
 	std::vector<VkImageView> framebufferAttachments = {
-		mSwapchain->GetSwapchainImages().at(index).mImageView->GetImageView()
+		mContext->mSwapchain->GetSwapchainImages().at(index).mImageView->GetImageView()
 	};
 	VkFramebufferCreateInfo framebufferCI = {
 		VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,						// sType
 		nullptr,														// pNext
 		0,																// flags
-		mRenderPass->GetRenderPass(),									// renderPass
+		mContext->mRenderPass->GetRenderPass(),							// renderPass
 		static_cast<uint32_t>(framebufferAttachments.size()),			// attachmentCount
 		framebufferAttachments.data(),									// pAttachments
-		mSwapchain->GetSwapchainExtent().width,							// width
-		mSwapchain->GetSwapchainExtent().height,						// height
+		mContext->mSwapchain->GetSwapchainExtent().width,				// width
+		mContext->mSwapchain->GetSwapchainExtent().height,				// height
 		1																// layers
 	};
 
-	VkResult result = vkCreateFramebuffer(mLogicalDevice->GetLogicalDevice(), &framebufferCI, nullptr, &mFramebuffer);
+	VkResult result = vkCreateFramebuffer(mContext->mLogicalDevice->GetLogicalDevice(), &framebufferCI, nullptr, &mFramebuffer);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Framebuffer created." << std::endl;
 	} else {
@@ -48,22 +49,22 @@ void FramebufferWrapper::CreateFramebuffer(int index) {
 
 void FramebufferWrapper::CreateFramebuffer(int index, ImageViewWrapper* imageView) {
 	std::vector<VkImageView> framebufferAttachments = {
-		mSwapchain->GetSwapchainImages().at(index).mImageView->GetImageView(),
+		mContext->mSwapchain->GetSwapchainImages().at(index).mImageView->GetImageView(),
 		imageView->GetImageView()
 	};
 	VkFramebufferCreateInfo framebufferCI = {
 		VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,						// sType
 		nullptr,														// pNext
 		0,																// flags
-		mRenderPass->GetRenderPass(),									// renderPass
+		mContext->mRenderPass->GetRenderPass(),							// renderPass
 		static_cast<uint32_t>(framebufferAttachments.size()),			// attachmentCount
 		framebufferAttachments.data(),									// pAttachments
-		mSwapchain->GetSwapchainExtent().width,							// width
-		mSwapchain->GetSwapchainExtent().height,						// height
+		mContext->mSwapchain->GetSwapchainExtent().width,				// width
+		mContext->mSwapchain->GetSwapchainExtent().height,				// height
 		1																// layers
 	};
 
-	VkResult result = vkCreateFramebuffer(mLogicalDevice->GetLogicalDevice(), &framebufferCI, nullptr, &mFramebuffer);
+	VkResult result = vkCreateFramebuffer(mContext->mLogicalDevice->GetLogicalDevice(), &framebufferCI, nullptr, &mFramebuffer);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Framebuffer created." << std::endl;
 	} else {

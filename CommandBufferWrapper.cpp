@@ -1,13 +1,14 @@
 #include "CommandBufferWrapper.h"
+#include "Context.h"
 #include "LogicalDeviceWrapper.h"
 #include "CommandPoolWrapper.h"
 
-CommandBufferWrapper::CommandBufferWrapper(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* commandpool) : mLogicalDevice(lDevice), mCommandPool(commandpool) {
+CommandBufferWrapper::CommandBufferWrapper(Context* context, CommandPoolWrapper* commandpool) : mContext(context), mCommandPool(commandpool) {
 	AllocateCommandBuffer();
 }
 
 CommandBufferWrapper::~CommandBufferWrapper() {
-	vkFreeCommandBuffers(mLogicalDevice->GetLogicalDevice(), mCommandPool->GetCommandPool(), 1, &mCommandBuffer); std::cout << "Success: Command Buffer freed." << std::endl;
+	vkFreeCommandBuffers(mContext->mLogicalDevice->GetLogicalDevice(), mCommandPool->GetCommandPool(), 1, &mCommandBuffer); std::cout << "Success: Command Buffer freed." << std::endl;
 }
 
 VkCommandBuffer CommandBufferWrapper::GetCommandBuffer() {
@@ -23,7 +24,7 @@ void CommandBufferWrapper::AllocateCommandBuffer() {
 		1														// commandBufferCount
 	};
 
-	VkResult result = vkAllocateCommandBuffers(mLogicalDevice->GetLogicalDevice(), &commandBufferAI, &mCommandBuffer);
+	VkResult result = vkAllocateCommandBuffers(mContext->mLogicalDevice->GetLogicalDevice(), &commandBufferAI, &mCommandBuffer);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Command Buffer allocated." << std::endl;
 	} else {

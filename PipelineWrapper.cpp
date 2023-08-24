@@ -1,18 +1,19 @@
 #include "PipelineWrapper.h"
 #include "globals.h"
+#include "Context.h"
 #include "LogicalDeviceWrapper.h"
 #include "ShaderWrapper.h"
 #include "RenderPassWrapper.h"
 #include "Mesh.h"
-#include "DescriptorSetWrapper.h"
+#include "DescriptorWrapper.h"
 
-PipelineWrapper::PipelineWrapper(LogicalDeviceWrapper* lDevice, RenderPassWrapper* renderpass, std::vector<DescriptorSetLayoutWrapper*> layouts) : mLogicalDevice(lDevice), mRenderPass(renderpass), mDescriptorSetLayouts(layouts) {
+PipelineWrapper::PipelineWrapper(Context* context, std::vector<DescriptorSetLayoutWrapper*> layouts) : mContext(context), mDescriptorSetLayouts(layouts) {
 	CreateDepthGraphicsPipeline();
 }
 
 PipelineWrapper::~PipelineWrapper() {
-	vkDestroyPipelineLayout(mLogicalDevice->GetLogicalDevice(), mPipelineLayout, nullptr);	std::cout << "Success: Pipeline Layout destroyed" << std::endl;
-	vkDestroyPipeline(mLogicalDevice->GetLogicalDevice(), mPipeline, nullptr);	std::cout << "Success: Pipeline destroyed" << std::endl;
+	vkDestroyPipelineLayout(mContext->mLogicalDevice->GetLogicalDevice(), mPipelineLayout, nullptr);	std::cout << "Success: Pipeline Layout destroyed" << std::endl;
+	vkDestroyPipeline(mContext->mLogicalDevice->GetLogicalDevice(), mPipeline, nullptr);	std::cout << "Success: Pipeline destroyed" << std::endl;
 }
 
 VkPipeline PipelineWrapper::GetPipeline() {
@@ -36,7 +37,7 @@ void PipelineWrapper::CreateGenericGraphicsPipeline() {
 	// Initialize ShaderWrapper classes
 	std::vector<ShaderWrapper*> mShaders(shaderFileNames.size());
 	for (size_t i = 0; i < shaderFileNames.size(); i++) {
-		mShaders.at(i) = new ShaderWrapper(mLogicalDevice, shaderFileNames[i]);
+		mShaders.at(i) = new ShaderWrapper(mContext->mLogicalDevice, shaderFileNames[i]);
 	}
 
 	// Create the shader stage create info structs
@@ -193,7 +194,7 @@ void PipelineWrapper::CreateGenericGraphicsPipeline() {
 	};
 
 	// Create the pipeline layout
-	VkResult result = vkCreatePipelineLayout(mLogicalDevice->GetLogicalDevice(), &pipelineLayoutCI, nullptr, &mPipelineLayout);
+	VkResult result = vkCreatePipelineLayout(mContext->mLogicalDevice->GetLogicalDevice(), &pipelineLayoutCI, nullptr, &mPipelineLayout);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Pipeline layout created." << std::endl;
 	} else {
@@ -217,13 +218,13 @@ void PipelineWrapper::CreateGenericGraphicsPipeline() {
 		&colorBlendCI,														// pColorBlendState
 		nullptr,															// pDynamicState
 		mPipelineLayout,													// layout
-		mRenderPass->GetRenderPass(),										// renderPass
+		mContext->mRenderPass->GetRenderPass(),								// renderPass
 		0,																	// subpass						TODO: Figure out how to calculate instead of hard-code
 		VK_NULL_HANDLE,														// basePipelineHandle
 		-1																	// basePipelineIndex
 	};
 
-	result = vkCreateGraphicsPipelines(mLogicalDevice->GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &mPipeline);
+	result = vkCreateGraphicsPipelines(mContext->mLogicalDevice->GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &mPipeline);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Graphics pipeline created." << std::endl;
 	} else {
@@ -232,7 +233,7 @@ void PipelineWrapper::CreateGenericGraphicsPipeline() {
 
 	// Destroy Shader Modules, since graphics pipeline has been created
 	for (size_t i = 0; i < mShaders.size(); i++) {
-		vkDestroyShaderModule(mLogicalDevice->GetLogicalDevice(), mShaders.at(i)->GetShaderModule(), nullptr);	std::cout << "Success: Shader module destroyed." << std::endl;
+		vkDestroyShaderModule(mContext->mLogicalDevice->GetLogicalDevice(), mShaders.at(i)->GetShaderModule(), nullptr);	std::cout << "Success: Shader module destroyed." << std::endl;
 	}
 }
 
@@ -246,7 +247,7 @@ void PipelineWrapper::CreateDepthGraphicsPipeline() {
 	// Initialize ShaderWrapper classes
 	std::vector<ShaderWrapper*> mShaders(shaderFileNames.size());
 	for (size_t i = 0; i < shaderFileNames.size(); i++) {
-		mShaders.at(i) = new ShaderWrapper(mLogicalDevice, shaderFileNames[i]);
+		mShaders.at(i) = new ShaderWrapper(mContext->mLogicalDevice, shaderFileNames[i]);
 	}
 
 	// Create the shader stage create info structs
@@ -435,7 +436,7 @@ void PipelineWrapper::CreateDepthGraphicsPipeline() {
 	};
 
 	// Create the pipeline layout
-	VkResult result = vkCreatePipelineLayout(mLogicalDevice->GetLogicalDevice(), &pipelineLayoutCI, nullptr, &mPipelineLayout);
+	VkResult result = vkCreatePipelineLayout(mContext->mLogicalDevice->GetLogicalDevice(), &pipelineLayoutCI, nullptr, &mPipelineLayout);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Pipeline layout created." << std::endl;
 	} else {
@@ -459,13 +460,13 @@ void PipelineWrapper::CreateDepthGraphicsPipeline() {
 		&colorBlendCI,														// pColorBlendState
 		nullptr,															// pDynamicState
 		mPipelineLayout,													// layout
-		mRenderPass->GetRenderPass(),										// renderPass
+		mContext->mRenderPass->GetRenderPass(),								// renderPass
 		0,																	// subpass						TODO: Figure out how to calculate instead of hard-code
 		VK_NULL_HANDLE,														// basePipelineHandle
 		-1																	// basePipelineIndex
 	};
 
-	result = vkCreateGraphicsPipelines(mLogicalDevice->GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &mPipeline);
+	result = vkCreateGraphicsPipelines(mContext->mLogicalDevice->GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &mPipeline);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Graphics pipeline created." << std::endl;
 	} else {
@@ -474,6 +475,6 @@ void PipelineWrapper::CreateDepthGraphicsPipeline() {
 
 	// Destroy Shader Modules, since graphics pipeline has been created
 	for (size_t i = 0; i < mShaders.size(); i++) {
-		vkDestroyShaderModule(mLogicalDevice->GetLogicalDevice(), mShaders.at(i)->GetShaderModule(), nullptr);	std::cout << "Success: Shader module destroyed." << std::endl;
+		vkDestroyShaderModule(mContext->mLogicalDevice->GetLogicalDevice(), mShaders.at(i)->GetShaderModule(), nullptr);	std::cout << "Success: Shader module destroyed." << std::endl;
 	}
 }

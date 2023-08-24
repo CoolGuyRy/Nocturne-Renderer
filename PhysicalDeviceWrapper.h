@@ -17,7 +17,7 @@ class SurfaceWrapper;
 
 struct QueueFamilyIndices {
 	int mGraphics = -1;
-	int mPresent = -1;					// Need to implement
+	int mPresent = -1;
 	int mCompute = -1;
 	int mTransfer = -1;
 	int mSparseBinding = -1;

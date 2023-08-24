@@ -13,4 +13,6 @@ void main(void) {
 	} else {
 		outColor = texture(textureSampler, fragUV);
 	}
+
+	outColor = texture(textureSampler, fragUV);
 }

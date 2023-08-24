@@ -1,13 +1,14 @@
 #include "CommandPoolWrapper.h"
 #include "globals.h"
+#include "Context.h"
 #include "LogicalDeviceWrapper.h"
 
-CommandPoolWrapper::CommandPoolWrapper(LogicalDeviceWrapper* lDevice, uint32_t index) : mLogicalDevice(lDevice) {
+CommandPoolWrapper::CommandPoolWrapper(Context* context, uint32_t index) : mContext(context) {
 	CreateCommandPool(index);
 }
 
 CommandPoolWrapper::~CommandPoolWrapper() {
-	vkDestroyCommandPool(mLogicalDevice->GetLogicalDevice(), mCommandPool, nullptr); std::cout << "Success: Command pool destroyed" << std::endl;
+	vkDestroyCommandPool(mContext->mLogicalDevice->GetLogicalDevice(), mCommandPool, nullptr); std::cout << "Success: Command pool destroyed" << std::endl;
 }
 
 VkCommandPool CommandPoolWrapper::GetCommandPool() {
@@ -22,7 +23,7 @@ void CommandPoolWrapper::CreateCommandPool(uint32_t index) {
 		index												// queueFamilyIndex
 	};
 
-	VkResult result = vkCreateCommandPool(mLogicalDevice->GetLogicalDevice(), &poolCI, nullptr, &mCommandPool);
+	VkResult result = vkCreateCommandPool(mContext->mLogicalDevice->GetLogicalDevice(), &poolCI, nullptr, &mCommandPool);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Command pool created" << std::endl;
 	} else {

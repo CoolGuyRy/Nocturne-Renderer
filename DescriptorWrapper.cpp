@@ -1,11 +1,12 @@
-#include "DescriptorSetWrapper.h"
+#include "DescriptorWrapper.h"
 #include "globals.h"
 #include "LogicalDeviceWrapper.h"
 #include "BufferWrapper.h"
 #include "ImageViewWrapper.h"
 #include "SamplerWrapper.h"
+#include "Context.h"
 
-DescriptorSetLayoutWrapper::DescriptorSetLayoutWrapper(LogicalDeviceWrapper* lDevice, DESCRIPTOR_TYPE type) : mLogicalDeviceWrapper(lDevice) {
+DescriptorSetLayoutWrapper::DescriptorSetLayoutWrapper(Context* context, DESCRIPTOR_TYPE type) : mContext(context) {
 	switch (type) {
 		case GENERIC:
 			CreateGenericDescriptorSetLayout();
@@ -22,7 +23,7 @@ DescriptorSetLayoutWrapper::DescriptorSetLayoutWrapper(LogicalDeviceWrapper* lDe
 }
 
 DescriptorSetLayoutWrapper::~DescriptorSetLayoutWrapper() {
-	vkDestroyDescriptorSetLayout(mLogicalDeviceWrapper->GetLogicalDevice(), mDescriptorSetLayout, nullptr); std::cout << "Success: Descriptor Set Layout destroyed." << std::endl;
+	vkDestroyDescriptorSetLayout(mContext->mLogicalDevice->GetLogicalDevice(), mDescriptorSetLayout, nullptr); std::cout << "Success: Descriptor Set Layout destroyed." << std::endl;
 }
 
 VkDescriptorSetLayout DescriptorSetLayoutWrapper::GetDescriptorSetLayout() {
@@ -53,7 +54,7 @@ void DescriptorSetLayoutWrapper::CreateGenericDescriptorSetLayout() {
 		&mvpLayoutBinding												// pBindings
 	};
 
-	VkResult result = vkCreateDescriptorSetLayout(mLogicalDeviceWrapper->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
+	VkResult result = vkCreateDescriptorSetLayout(mContext->mLogicalDevice->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Generic Descriptor Set Layout created." << std::endl;
 	} else {
@@ -95,7 +96,7 @@ void DescriptorSetLayoutWrapper::CreateDynamicDescriptorSetLayout() {
 		layoutBindings.data()											// pBindings
 	};
 
-	VkResult result = vkCreateDescriptorSetLayout(mLogicalDeviceWrapper->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
+	VkResult result = vkCreateDescriptorSetLayout(mContext->mLogicalDevice->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Dynamic Descriptor Set Layout created." << std::endl;
 	} else {
@@ -121,7 +122,7 @@ void DescriptorSetLayoutWrapper::CreateTextureDescriptorSetLayout() {
 		.pBindings = &textureSamplerLayoutBinding
 	};
 
-	VkResult result = vkCreateDescriptorSetLayout(mLogicalDeviceWrapper->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
+	VkResult result = vkCreateDescriptorSetLayout(mContext->mLogicalDevice->GetLogicalDevice(), &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Texture Descriptor Set Layout created." << std::endl;
 	} else {
@@ -129,7 +130,7 @@ void DescriptorSetLayoutWrapper::CreateTextureDescriptorSetLayout() {
 	}
 }
 
-DescriptorPoolWrapper::DescriptorPoolWrapper(LogicalDeviceWrapper* lDevice, DESCRIPTOR_TYPE type) : mLogicalDevice(lDevice) {
+DescriptorPoolWrapper::DescriptorPoolWrapper(Context* context, DESCRIPTOR_TYPE type) : mContext(context) {
 	switch (type) {
 	case GENERIC:
 		CreateGenericDescriptorPool();
@@ -146,7 +147,7 @@ DescriptorPoolWrapper::DescriptorPoolWrapper(LogicalDeviceWrapper* lDevice, DESC
 }
 
 DescriptorPoolWrapper::~DescriptorPoolWrapper() {
-	vkDestroyDescriptorPool(mLogicalDevice->GetLogicalDevice(), mDescriptorPool, nullptr); std::cout << "Success: Descriptor Pool destroyed." << std::endl;
+	vkDestroyDescriptorPool(mContext->mLogicalDevice->GetLogicalDevice(), mDescriptorPool, nullptr); std::cout << "Success: Descriptor Pool destroyed." << std::endl;
 }
 
 VkDescriptorPool DescriptorPoolWrapper::GetDescriptorPool() {
@@ -168,7 +169,7 @@ void DescriptorPoolWrapper::CreateGenericDescriptorPool() {
 		&poolSize														// pPoolSizes
 	};
 
-	VkResult result = vkCreateDescriptorPool(mLogicalDevice->GetLogicalDevice(), &descriptorPoolCI, nullptr, &mDescriptorPool);
+	VkResult result = vkCreateDescriptorPool(mContext->mLogicalDevice->GetLogicalDevice(), &descriptorPoolCI, nullptr, &mDescriptorPool);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Descriptor Pool created!" << std::endl;
 	} else {
@@ -198,7 +199,7 @@ void DescriptorPoolWrapper::CreateDynamicDescriptorPool() {
 		poolSizes.data()												// pPoolSizes
 	};
 
-	VkResult result = vkCreateDescriptorPool(mLogicalDevice->GetLogicalDevice(), &descriptorPoolCI, nullptr, &mDescriptorPool);
+	VkResult result = vkCreateDescriptorPool(mContext->mLogicalDevice->GetLogicalDevice(), &descriptorPoolCI, nullptr, &mDescriptorPool);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Descriptor Pool created!" << std::endl;
 	} else {
@@ -221,7 +222,7 @@ void DescriptorPoolWrapper::CreateTextureDescriptorPool() {
 		.pPoolSizes = &texturePoolSize
 	};
 
-	VkResult result = vkCreateDescriptorPool(mLogicalDevice->GetLogicalDevice(), &texturePoolCI, nullptr, &mDescriptorPool);
+	VkResult result = vkCreateDescriptorPool(mContext->mLogicalDevice->GetLogicalDevice(), &texturePoolCI, nullptr, &mDescriptorPool);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Texture Descriptor Pool created!" << std::endl;
 	} else {
@@ -229,7 +230,7 @@ void DescriptorPoolWrapper::CreateTextureDescriptorPool() {
 	}
 }
 
-DescriptorSetWrapper::DescriptorSetWrapper(LogicalDeviceWrapper* lDevice , DescriptorSetLayoutWrapper* layout, DescriptorPoolWrapper* pool, DESCRIPTOR_TYPE type) : mLogicalDevice(lDevice), mDescriptorSetLayout(layout), mDescriptorPool(pool) {
+DescriptorSetWrapper::DescriptorSetWrapper(Context* context, DescriptorSetLayoutWrapper* layout, DescriptorPoolWrapper* pool, DESCRIPTOR_TYPE type) : mContext(context), mDescriptorSetLayout(layout), mDescriptorPool(pool), mDescriptorSet(nullptr) {
 	switch (type) {
 		case GENERIC:
 			CreateGenericDescriptorSet();
@@ -244,7 +245,7 @@ DescriptorSetWrapper::DescriptorSetWrapper(LogicalDeviceWrapper* lDevice , Descr
 }
 
 DescriptorSetWrapper::~DescriptorSetWrapper() {
-	vkFreeDescriptorSets(mLogicalDevice->GetLogicalDevice(), mDescriptorPool->GetDescriptorPool(), 1, &mDescriptorSet); std::cout << "Success: Descriptor Set freed." << std::endl;
+	vkFreeDescriptorSets(mContext->mLogicalDevice->GetLogicalDevice(), mDescriptorPool->GetDescriptorPool(), 1, &mDescriptorSet); std::cout << "Success: Descriptor Set freed." << std::endl;
 }
 
 void DescriptorSetWrapper::WriteGenericDescriptorSet(BufferWrapper* buffer) {
@@ -267,7 +268,7 @@ void DescriptorSetWrapper::WriteGenericDescriptorSet(BufferWrapper* buffer) {
 		nullptr															// pTexelBufferView
 	};
 
-	vkUpdateDescriptorSets(mLogicalDevice->GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
+	vkUpdateDescriptorSets(mContext->mLogicalDevice->GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
 }
 
 void DescriptorSetWrapper::WriteDynamicDescriptorSet(BufferWrapper* viewProj, BufferWrapper* model) {
@@ -311,7 +312,7 @@ void DescriptorSetWrapper::WriteDynamicDescriptorSet(BufferWrapper* viewProj, Bu
 
 	std::vector<VkWriteDescriptorSet> writeDescriptorSets = { viewProjWriteDescriptorSet, modelWriteDescriptorSet };
 
-	vkUpdateDescriptorSets(mLogicalDevice->GetLogicalDevice(), (uint32_t)writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(mContext->mLogicalDevice->GetLogicalDevice(), (uint32_t)writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
 }
 
 void DescriptorSetWrapper::WriteTextureDescriptorSet(ImageViewWrapper* imageView, SamplerWrapper* sampler) {
@@ -334,7 +335,7 @@ void DescriptorSetWrapper::WriteTextureDescriptorSet(ImageViewWrapper* imageView
 		.pTexelBufferView = nullptr
 	};
 
-	vkUpdateDescriptorSets(mLogicalDevice->GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
+	vkUpdateDescriptorSets(mContext->mLogicalDevice->GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
 }
 
 VkDescriptorSet DescriptorSetWrapper::GetDescriptorSet() {
@@ -351,7 +352,7 @@ void DescriptorSetWrapper::CreateGenericDescriptorSet() {
 		&layout															// pSetLayouts
 	};
 
-	VkResult result = vkAllocateDescriptorSets(mLogicalDevice->GetLogicalDevice(), &descriptorSetAI, &mDescriptorSet);
+	VkResult result = vkAllocateDescriptorSets(mContext->mLogicalDevice->GetLogicalDevice(), &descriptorSetAI, &mDescriptorSet);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Descriptor Set allocated." << std::endl;
 	} else {
@@ -376,7 +377,7 @@ void DescriptorSetWrapper::CreateDynamicDescriptorSet() {
 		&layout															// pSetLayouts
 	};
 
-	VkResult result = vkAllocateDescriptorSets(mLogicalDevice->GetLogicalDevice(), &descriptorSetAI, &mDescriptorSet);
+	VkResult result = vkAllocateDescriptorSets(mContext->mLogicalDevice->GetLogicalDevice(), &descriptorSetAI, &mDescriptorSet);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Descriptor Set allocated." << std::endl;
 	} else {
@@ -394,7 +395,7 @@ void DescriptorSetWrapper::CreateTextureDescriptorSet() {
 		.pSetLayouts = &layout
 	};
 
-	VkResult result = vkAllocateDescriptorSets(mLogicalDevice->GetLogicalDevice(), &descriptorSetAI, &mDescriptorSet);
+	VkResult result = vkAllocateDescriptorSets(mContext->mLogicalDevice->GetLogicalDevice(), &descriptorSetAI, &mDescriptorSet);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Descriptor Set allocated." << std::endl;
 	} else {

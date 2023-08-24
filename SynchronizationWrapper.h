@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
+class Context;
 class LogicalDeviceWrapper;
 
 /*
@@ -13,7 +14,7 @@ class LogicalDeviceWrapper;
 
 class SemaphoreWrapper {
 public:
-	SemaphoreWrapper(LogicalDeviceWrapper*);
+	SemaphoreWrapper(Context*);
 	~SemaphoreWrapper();
 
 	VkSemaphore GetSemaphore();
@@ -22,12 +23,12 @@ private:
 
 	VkSemaphore mSemaphore;
 
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 };
 
 class FenceWrapper {
 public:
-	FenceWrapper(LogicalDeviceWrapper*, VkFenceCreateFlags);
+	FenceWrapper(Context*, VkFenceCreateFlags);
 	~FenceWrapper();
 
 	VkFence GetFence();
@@ -36,7 +37,7 @@ private:
 
 	VkFence mFence;
 
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 };
 
 #endif

@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
 
+class Context;
 class PhysicalDeviceWrapper;
 class LogicalDeviceWrapper;
 class CommandPoolWrapper;
@@ -19,8 +20,8 @@ struct Vertex {
 
 class Mesh {
 public:
-	Mesh(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, CommandPoolWrapper*, std::vector<Vertex>*, std::vector<uint32_t>*);
-	Mesh(PhysicalDeviceWrapper*, LogicalDeviceWrapper*, CommandPoolWrapper*, std::vector<Vertex>*, std::vector<uint32_t>*, int);
+	Mesh(Context*, CommandPoolWrapper*, std::vector<Vertex>*, std::vector<uint32_t>*);
+	Mesh(Context*, CommandPoolWrapper*, std::vector<Vertex>*, std::vector<uint32_t>*, int);
 	~Mesh();
 
 	glm::mat4 GetModel();
@@ -43,8 +44,7 @@ private:
 	BufferWrapper* mVertexBuffer;
 	BufferWrapper* mIndexBuffer;
 
-	PhysicalDeviceWrapper* mPhysicalDevice;
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 	CommandPoolWrapper* mTransferCommandPool;
 };
 

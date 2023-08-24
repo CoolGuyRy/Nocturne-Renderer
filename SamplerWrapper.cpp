@@ -1,13 +1,14 @@
 #include "SamplerWrapper.h"
 #include "globals.h"
+#include "Context.h"
 #include "LogicalDeviceWrapper.h"
 
-SamplerWrapper::SamplerWrapper(LogicalDeviceWrapper* lDevice) : mLogicalDevice(lDevice) {
+SamplerWrapper::SamplerWrapper(Context* context) : mContext(context) {
 	CreateSampler();
 }
 
 SamplerWrapper::~SamplerWrapper() {
-	vkDestroySampler(mLogicalDevice->GetLogicalDevice(), mSampler, nullptr); std::cout << "Success: Sampler Destroyed." << std::endl;
+	vkDestroySampler(mContext->mLogicalDevice->GetLogicalDevice(), mSampler, nullptr); std::cout << "Success: Sampler Destroyed." << std::endl;
 }
 
 VkSampler SamplerWrapper::GetSampler() {
@@ -36,7 +37,7 @@ void SamplerWrapper::CreateSampler() {
 		.unnormalizedCoordinates = VK_FALSE
 	};
 
-	VkResult result = vkCreateSampler(mLogicalDevice->GetLogicalDevice(), &samplerCI, nullptr, &mSampler);
+	VkResult result = vkCreateSampler(mContext->mLogicalDevice->GetLogicalDevice(), &samplerCI, nullptr, &mSampler);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Texture Sampler created." << std::endl;
 	} else {

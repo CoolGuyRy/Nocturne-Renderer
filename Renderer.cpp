@@ -1,13 +1,11 @@
 #include "Renderer.h"
 #include "globals.h"
-#include "WindowWrapper.h"
-#include "InstanceWrapper.h"
-#include "SurfaceWrapper.h"
-#include "PhysicalDeviceWrapper.h"
+#include "Context.h"
 #include "LogicalDeviceWrapper.h"
+#include "PhysicalDeviceWrapper.h"
 #include "SwapchainWrapper.h"
-#include "ShaderWrapper.h"
 #include "RenderPassWrapper.h"
+#include "ShaderWrapper.h"
 #include "PipelineWrapper.h"
 #include "FramebufferWrapper.h"
 #include "CommandPoolWrapper.h"
@@ -15,61 +13,73 @@
 #include "SynchronizationWrapper.h"
 #include "BufferWrapper.h"
 #include "Mesh.h"
-#include "DescriptorSetWrapper.h"
+#include "DescriptorWrapper.h"
 #include "ImageWrapper.h"
 #include "ImageViewWrapper.h"
 #include "SamplerWrapper.h"
 
-Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
-	mInstance = new InstanceWrapper();
-	mSurface = new SurfaceWrapper(mWindow, mInstance);
-	mPhysicalDevice = new PhysicalDeviceWrapper(mInstance, mSurface);
-	mLogicalDevice = new LogicalDeviceWrapper(mPhysicalDevice);
-	mSwapchain = new SwapchainWrapper(mPhysicalDevice, mLogicalDevice, mSurface);
-	mRenderPass = new RenderPassWrapper(mLogicalDevice, mSurface);
-	mDescriptorSetLayout = new DescriptorSetLayoutWrapper(mLogicalDevice, DYNAMIC);
-	mTSDescriptorSetLayout = new DescriptorSetLayoutWrapper(mLogicalDevice, TEXTURE);
+Renderer::Renderer() {
+	mContext = new Context();
+	mDescriptorSetLayout = new DescriptorSetLayoutWrapper(mContext, DYNAMIC);
+	mTSDescriptorSetLayout = new DescriptorSetLayoutWrapper(mContext, TEXTURE);
 	std::vector<DescriptorSetLayoutWrapper*> layouts = { mDescriptorSetLayout, mTSDescriptorSetLayout };
-	mPipeline = new PipelineWrapper(mLogicalDevice, mRenderPass, layouts);
-	mGraphicsCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mGraphics);
-	mTransferCommandPool = new CommandPoolWrapper(mLogicalDevice, mPhysicalDevice->GetQueueFamilyIndices().mTransfer);
-	mDescriptorPool = new DescriptorPoolWrapper(mLogicalDevice, DYNAMIC);
-	mTDescriptorPool = new DescriptorPoolWrapper(mLogicalDevice, TEXTURE);
-	mDepthImage = new ImageWrapper(mPhysicalDevice, mLogicalDevice, mGraphicsCommandPool, WINDOW_WIDTH, WINDOW_HEIGHT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	mDepthImageView = new ImageViewWrapper(mLogicalDevice, mDepthImage->GetImage(), VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
-	mTextureImage = new ImageWrapper(mPhysicalDevice, mLogicalDevice, mGraphicsCommandPool, ".\\Resources\\Textures\\container2.png");
-	mTextureImageView = new ImageViewWrapper(mLogicalDevice, mTextureImage->GetImage(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+	mPipeline = new PipelineWrapper(mContext, layouts);
+	mGraphicsCommandPool = new CommandPoolWrapper(mContext, mContext->mPhysicalDevice->GetQueueFamilyIndices().mGraphics);
+	mTransferCommandPool = new CommandPoolWrapper(mContext, mContext->mPhysicalDevice->GetQueueFamilyIndices().mTransfer);
+	mDescriptorPool = new DescriptorPoolWrapper(mContext, DYNAMIC);
+	mTDescriptorPool = new DescriptorPoolWrapper(mContext, TEXTURE);
+	mDepthImage = new ImageWrapper(mContext, mGraphicsCommandPool, WINDOW_WIDTH, WINDOW_HEIGHT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	mDepthImageView = new ImageViewWrapper(mContext, mDepthImage->GetImage(), VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT);
+	mTextureImage = new ImageWrapper(mContext, mGraphicsCommandPool, ".\\Resources\\Textures\\container2.png");
+	mTextureImageView = new ImageViewWrapper(mContext, mTextureImage->GetImage(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 	allocateDynamicBufferTransferSpace();	// Figure out the spacing necessary for aligned memory access of dynamic buffers
-	for (size_t i = 0; i < mSwapchain->GetSwapchainImages().size(); i++) {
-		mFramebuffers.push_back(new FramebufferWrapper(mLogicalDevice, mSwapchain, mRenderPass, (int)i, mDepthImageView));
-		mCommandBuffers.push_back(new CommandBufferWrapper(mLogicalDevice, mGraphicsCommandPool));
-		mUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)sizeof(mVP), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
-		mDynamicUniformBuffers.push_back(new BufferWrapper(mPhysicalDevice, mLogicalDevice, (VkDeviceSize)(mModelUniformAlignment * MAX_OBJECTS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
-		mDescriptorSets.push_back(new DescriptorSetWrapper(mLogicalDevice, mDescriptorSetLayout, mDescriptorPool, DYNAMIC));
+	for (size_t i = 0; i < mContext->mSwapchain->GetSwapchainImages().size(); i++) {
+		mFramebuffers.push_back(new FramebufferWrapper(mContext, (int)i, mDepthImageView));
+		mCommandBuffers.push_back(new CommandBufferWrapper(mContext, mGraphicsCommandPool));
+		mUniformBuffers.push_back(new BufferWrapper(mContext, (VkDeviceSize)sizeof(mVP), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
+		mDynamicUniformBuffers.push_back(new BufferWrapper(mContext, (VkDeviceSize)(mModelUniformAlignment * MAX_OBJECTS), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT));
+		mDescriptorSets.push_back(new DescriptorSetWrapper(mContext, mDescriptorSetLayout, mDescriptorPool, DYNAMIC));
 		mDescriptorSets.at(i)->WriteDynamicDescriptorSet(mUniformBuffers.at(i), mDynamicUniformBuffers.at(i));
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_DRAW; i++) {
-		mImageAvailableSemaphores.push_back(new SemaphoreWrapper(mLogicalDevice));
-		mRenderFinishedSemaphores.push_back(new SemaphoreWrapper(mLogicalDevice));
-		mDrawFences.push_back(new FenceWrapper(mLogicalDevice, VK_FENCE_CREATE_SIGNALED_BIT));
+		mImageAvailableSemaphores.push_back(new SemaphoreWrapper(mContext));
+		mRenderFinishedSemaphores.push_back(new SemaphoreWrapper(mContext));
+		mDrawFences.push_back(new FenceWrapper(mContext, VK_FENCE_CREATE_SIGNALED_BIT));
 	}
-	mSampler = new SamplerWrapper(mLogicalDevice);
+	mSampler = new SamplerWrapper(mContext);
 
-	mTextureDescriptorSet = new DescriptorSetWrapper(mLogicalDevice, mTSDescriptorSetLayout, mTDescriptorPool, TEXTURE);
+	mTextureDescriptorSet = new DescriptorSetWrapper(mContext, mTSDescriptorSetLayout, mTDescriptorPool, TEXTURE);
 	mTextureDescriptorSet->WriteTextureDescriptorSet(mTextureImageView, mSampler);
 
 	std::vector<Vertex> cubeVertices = {
-		{ {  1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f } },
-		{ {  1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f } },
-		{ {  1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f, 1.0f } },
-		{ {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 0.0f } },
-		{ { -1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 1.0f } },
-		{ { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f, 1.0f } },
-		{ { -1.0f, -1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } },
-		{ { -1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } }
+		{ {  1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },	// 0 - A
+		{ {  1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },	// 1 - B
+		{ {  1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },	// 2 - C
+		{ {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } },	// 3 - D
+		{ { -1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },	// 4 - E
+		{ { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f } },	// 5 - F
+		{ { -1.0f, -1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f } },	// 6 - G
+		{ { -1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 0.0f } }	// 7 - H
 	};
 	std::vector<uint32_t> cubeIndices = {
+
+		6, 3, 2,
+		6, 7, 3,
+		2, 1, 0,
+		2, 3, 1,
+		0, 1, 4,
+		1, 5, 4,
+		4, 5, 6,
+		5, 7, 6,
+		4, 6, 2,
+		4, 2, 0,
+		5, 3, 7,
+		5, 1, 3
+
+
+		/*
+		
 		4, 2, 0,
 		2, 7, 3,
 		6, 5, 7,
@@ -82,6 +92,8 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 		1, 3, 7,
 		0, 2, 3,
 		4, 0, 1
+		
+		*/
 	};
 
 	std::vector<Vertex> texturedMeshVertices = {
@@ -96,13 +108,13 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 		2, 3, 0
 	};
 
-	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &cubeVertices, &cubeIndices));
-	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &cubeVertices, &cubeIndices));
-	mMeshList.push_back(new Mesh(mPhysicalDevice, mLogicalDevice, mTransferCommandPool, &texturedMeshVertices, &texturedMeshIndices));
+	mMeshList.push_back(new Mesh(mContext, mTransferCommandPool, &cubeVertices, &cubeIndices));
+	mMeshList.push_back(new Mesh(mContext, mTransferCommandPool, &cubeVertices, &cubeIndices));
+	mMeshList.push_back(new Mesh(mContext, mTransferCommandPool, &texturedMeshVertices, &texturedMeshIndices));
 
 	RecordCommands();
 
-	mVP.mProjection = glm::perspective(glm::radians(45.0f), (float)mSwapchain->GetSwapchainExtent().width / (float)mSwapchain->GetSwapchainExtent().height, 0.1f, 1000.0f);
+	mVP.mProjection = glm::perspective(glm::radians(45.0f), (float)mContext->mSwapchain->GetSwapchainExtent().width / (float)mContext->mSwapchain->GetSwapchainExtent().height, 0.1f, 1000.0f);
 	mVP.mView = glm::lookAt(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	mVP.mProjection[1][1] *= -1;
@@ -111,7 +123,7 @@ Renderer::Renderer(WindowWrapper* window) : mWindow(window) {
 }
 
 Renderer::~Renderer() {
-	vkDeviceWaitIdle(mLogicalDevice->GetLogicalDevice());
+	vkDeviceWaitIdle(mContext->mLogicalDevice->GetLogicalDevice());
 
 	_aligned_free(mModelTransferSpace);
 
@@ -145,22 +157,17 @@ Renderer::~Renderer() {
 	delete mPipeline;
 	delete mTSDescriptorSetLayout;
 	delete mDescriptorSetLayout;
-	delete mRenderPass;
-	delete mSwapchain;
-	delete mLogicalDevice;
-	delete mPhysicalDevice;
-	delete mSurface;
-	delete mInstance;
+	delete mContext;
 }
 
 void Renderer::Draw() {
 	VkFence drawFence = mDrawFences.at(mCurrentFrame)->GetFence();
-	vkWaitForFences(mLogicalDevice->GetLogicalDevice(), 1, &drawFence, VK_TRUE, UINT64_MAX);
-	vkResetFences(mLogicalDevice->GetLogicalDevice(), 1, &drawFence);
+	vkWaitForFences(mContext->mLogicalDevice->GetLogicalDevice(), 1, &drawFence, VK_TRUE, UINT64_MAX);
+	vkResetFences(mContext->mLogicalDevice->GetLogicalDevice(), 1, &drawFence);
 
 	/// Grab next available image
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(mLogicalDevice->GetLogicalDevice(), mSwapchain->GetSwapchain(), UINT64_MAX, mImageAvailableSemaphores.at(mCurrentFrame)->GetSemaphore(), VK_NULL_HANDLE, &imageIndex);
+	vkAcquireNextImageKHR(mContext->mLogicalDevice->GetLogicalDevice(), mContext->mSwapchain->GetSwapchain(), UINT64_MAX, mImageAvailableSemaphores.at(mCurrentFrame)->GetSemaphore(), VK_NULL_HANDLE, &imageIndex);
 
 	// Update Uniform Buffers and Dynamic Uniform Buffers
 	mUniformBuffers.at(imageIndex)->MapBufferMemory(&mVP, sizeof(mVP));
@@ -192,12 +199,12 @@ void Renderer::Draw() {
 		.pSignalSemaphores = &signalSemaphore
 	};
 
-	VkResult result = vkQueueSubmit(mLogicalDevice->GetGraphicsQueue(), 1, &queueSI, mDrawFences.at(mCurrentFrame)->GetFence());
+	VkResult result = vkQueueSubmit(mContext->mLogicalDevice->GetGraphicsQueue(), 1, &queueSI, mDrawFences.at(mCurrentFrame)->GetFence());
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to submit draw command buffer to queue! Error Code: " + NT_CHECK_RESULT(result));
 	}
 
-	VkSwapchainKHR swapchain= mSwapchain->GetSwapchain();
+	VkSwapchainKHR swapchain= mContext->mSwapchain->GetSwapchain();
 	VkPresentInfoKHR presentInfo = {
 		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 		.pNext = nullptr,
@@ -208,7 +215,7 @@ void Renderer::Draw() {
 		.pImageIndices = &imageIndex
 	};
 
-	result = vkQueuePresentKHR(mLogicalDevice->GetPresentQueue(), &presentInfo);
+	result = vkQueuePresentKHR(mContext->mLogicalDevice->GetPresentQueue(), &presentInfo);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to present Image! Error Code: " + NT_CHECK_RESULT(result));
 	}
@@ -226,6 +233,10 @@ void Renderer::UpdateCamera(glm::mat4 view) {
 	mVP.mView = view;
 }
 
+Context* Renderer::GetContext() {
+	return mContext;
+}
+
 void Renderer::RecordCommands() {
 	VkCommandBufferBeginInfo commandBufferBI = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -239,7 +250,7 @@ void Renderer::RecordCommands() {
 	VkRenderPassBeginInfo renderPassBI = {
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 		.pNext = nullptr,
-		.renderPass = mRenderPass->GetRenderPass(),
+		.renderPass = mContext->mRenderPass->GetRenderPass(),
 		.framebuffer = VK_NULL_HANDLE,
 		.renderArea = {
 			.offset = {
@@ -247,8 +258,8 @@ void Renderer::RecordCommands() {
 				.y = 0
 			},
 			.extent = {
-				.width = mSwapchain->GetSwapchainExtent().width,
-				.height = mSwapchain->GetSwapchainExtent().height
+				.width = mContext->mSwapchain->GetSwapchainExtent().width,
+				.height = mContext->mSwapchain->GetSwapchainExtent().height
 			}
 		},
 		.clearValueCount = (uint32_t)clearValues.size(),
@@ -280,7 +291,7 @@ void Renderer::RecordCommands() {
 
 					std::vector<VkDescriptorSet> descriptorSets = { mDescriptorSets.at(i)->GetDescriptorSet(), mTextureDescriptorSet->GetDescriptorSet()};
 						
-					vkCmdBindDescriptorSets(mCommandBuffers.at(i)->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipelineLayout(), 0, descriptorSets.size(), descriptorSets.data(), 1, &dynamicOffset);
+					vkCmdBindDescriptorSets(mCommandBuffers.at(i)->GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipelineLayout(), 0, (uint32_t)descriptorSets.size(), descriptorSets.data(), 1, &dynamicOffset);
 				
 					vkCmdDrawIndexed(mCommandBuffers.at(i)->GetCommandBuffer(), mMeshList.at(j)->GetIndexCount(), 1, 0, 0, 0);
 				}
@@ -296,7 +307,7 @@ void Renderer::RecordCommands() {
 
 void Renderer::allocateDynamicBufferTransferSpace() {
 	// Grab the minimum required size for uniform buffer offsets
-	mMinUniformBufferOffset = mPhysicalDevice->GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
+	mMinUniformBufferOffset = mContext->mPhysicalDevice->GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
 
 	// Do some weird bit shifting magic
 	mModelUniformAlignment = (sizeof(glm::mat4) + mMinUniformBufferOffset - 1) & ~(mMinUniformBufferOffset - 1);

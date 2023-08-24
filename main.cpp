@@ -7,6 +7,7 @@
 
 #include "WindowWrapper.h"
 #include "Renderer.h"
+#include "Context.h"
 
 void PreCompileShaders() {
 	std::string pathToPrint = std::filesystem::current_path().string() + "\\Resources\\Shaders\\";
@@ -28,20 +29,20 @@ void PreCompileShaders() {
 	}
 }
 
-int main() {
+int RunNocturne() {
 	int gProgramSuccess = EXIT_SUCCESS;
 
 	try {
 		PreCompileShaders();
 
 		WindowWrapper gWindow;
-		Renderer gRenderer(&gWindow);
+		Renderer gRenderer;
 
 		float angle = 0.0f;
 		float deltaTime = 0.0f;
 		float lastTime = 0.0f;
 
-		while (!glfwWindowShouldClose(gWindow.GetWindow())) {
+		while (!glfwWindowShouldClose(gRenderer.GetContext()->mWindow->GetWindow())) {
 			float now = (float)glfwGetTime();
 			deltaTime = now - lastTime;
 			lastTime = now;
@@ -91,4 +92,42 @@ int main() {
 	#endif
 
 	return gProgramSuccess;
+}
+
+/*
+int TestNocturne() {
+	int gProgramSuccess = EXIT_SUCCESS;
+
+	try {
+		PreCompileShaders();
+
+		Context gContext;
+
+		float angle = 0.0f;
+		float deltaTime = 0.0f;
+		float lastTime = 0.0f;
+
+		while (!glfwWindowShouldClose(gContext.mWindowWrapper->GetWindow())) {
+			float now = (float)glfwGetTime();
+			deltaTime = now - lastTime;
+			lastTime = now;
+
+			glfwPollEvents();
+		}
+
+	} catch (const std::runtime_error& e) {
+		std::cout << "Nocturne Error: " << e.what() << std::endl;
+		gProgramSuccess = EXIT_FAILURE;
+	}
+
+	#ifndef NDEBUG
+		system("PAUSE");
+	#endif
+
+	return gProgramSuccess;
+}
+*/
+
+int main() {
+	return RunNocturne();
 }

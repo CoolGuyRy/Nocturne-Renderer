@@ -3,11 +3,12 @@
 
 #include <vulkan/vulkan.h>
 
+class Context;
 class LogicalDeviceWrapper;
 
 class SamplerWrapper {
 public:
-	SamplerWrapper(LogicalDeviceWrapper*);
+	SamplerWrapper(Context*);
 	~SamplerWrapper();
 
 	VkSampler GetSampler();
@@ -16,7 +17,7 @@ private:
 
 	VkSampler mSampler;
 
-	LogicalDeviceWrapper* mLogicalDevice;
+	Context* mContext;
 };
 
 #endif

@@ -5,9 +5,8 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-class LogicalDeviceWrapper;
+class Context;
 class ShaderWrapper;
-class RenderPassWrapper;
 class DescriptorSetLayoutWrapper;
 
 /*
@@ -18,7 +17,7 @@ class DescriptorSetLayoutWrapper;
 
 class PipelineWrapper {
 public:
-	PipelineWrapper(LogicalDeviceWrapper*, RenderPassWrapper*, std::vector<DescriptorSetLayoutWrapper*>);
+	PipelineWrapper(Context*, std::vector<DescriptorSetLayoutWrapper*>);
 	~PipelineWrapper();
 
 	VkPipeline GetPipeline();
@@ -31,8 +30,7 @@ private:
 	VkPipeline mPipeline;
 	VkPipelineLayout mPipelineLayout;
 
-	LogicalDeviceWrapper* mLogicalDevice;
-	RenderPassWrapper* mRenderPass;
+	Context* mContext;
 	std::vector<DescriptorSetLayoutWrapper*> mDescriptorSetLayouts;
 };
 

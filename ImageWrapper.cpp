@@ -1,22 +1,23 @@
 #include "ImageWrapper.h"
 #include "globals.h"
+#include "Context.h"
 #include "PhysicalDeviceWrapper.h"
 #include "LogicalDeviceWrapper.h"
 #include "CommandPoolWrapper.h"
 #include "CommandBufferWrapper.h"
 #include "BufferWrapper.h"
 
-ImageWrapper::ImageWrapper(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrapper* lDevice, CommandPoolWrapper* gPool, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags useFlags, VkMemoryPropertyFlags propFlags) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice), mGraphicsCommandPool(gPool) {
+ImageWrapper::ImageWrapper(Context* context, CommandPoolWrapper* gPool, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags useFlags, VkMemoryPropertyFlags propFlags) : mContext(context), mGraphicsCommandPool(gPool) {
 	CreateImage(width, height, format, tiling, useFlags, propFlags);
 }
 
-ImageWrapper::ImageWrapper(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrapper* lDevice, CommandPoolWrapper* gPool, std::string filename) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice), mGraphicsCommandPool(gPool) {
+ImageWrapper::ImageWrapper(Context* context, CommandPoolWrapper* gPool, std::string filename) : mContext(context), mGraphicsCommandPool(gPool) {
 	CreateTextureImage(filename);
 }
 
 ImageWrapper::~ImageWrapper() {
-	vkDestroyImage(mLogicalDevice->GetLogicalDevice(), mImage, nullptr);
-	vkFreeMemory(mLogicalDevice->GetLogicalDevice(), mImageMemory, nullptr);
+	vkDestroyImage(mContext->mLogicalDevice->GetLogicalDevice(), mImage, nullptr);
+	vkFreeMemory(mContext->mLogicalDevice->GetLogicalDevice(), mImageMemory, nullptr);
 }
 
 VkImage ImageWrapper::GetImage() {
@@ -46,7 +47,7 @@ void ImageWrapper::CreateImage(uint32_t width, uint32_t height, VkFormat format,
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
 	};
 
-	VkResult result = vkCreateImage(mLogicalDevice->GetLogicalDevice(), &imageCI, nullptr, &mImage);
+	VkResult result = vkCreateImage(mContext->mLogicalDevice->GetLogicalDevice(), &imageCI, nullptr, &mImage);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Image created." << std::endl;
 	} else {
@@ -54,23 +55,23 @@ void ImageWrapper::CreateImage(uint32_t width, uint32_t height, VkFormat format,
 	}
 
 	VkMemoryRequirements memoryRequirements;
-	vkGetImageMemoryRequirements(mLogicalDevice->GetLogicalDevice(), mImage, &memoryRequirements);
+	vkGetImageMemoryRequirements(mContext->mLogicalDevice->GetLogicalDevice(), mImage, &memoryRequirements);
 
 	VkMemoryAllocateInfo memoryAI = {
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.pNext = nullptr,
 		.allocationSize = memoryRequirements.size,
-		.memoryTypeIndex = FindMemoryTypeIndex(mPhysicalDevice->GetPhysicalDevice(), memoryRequirements.memoryTypeBits, propFlags)
+		.memoryTypeIndex = FindMemoryTypeIndex(mContext->mPhysicalDevice->GetPhysicalDevice(), memoryRequirements.memoryTypeBits, propFlags)
 	};
 
-	result = vkAllocateMemory(mLogicalDevice->GetLogicalDevice(), &memoryAI, nullptr, &mImageMemory);
+	result = vkAllocateMemory(mContext->mLogicalDevice->GetLogicalDevice(), &memoryAI, nullptr, &mImageMemory);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Image Memory allocated." << std::endl;
 	} else {
 		throw std::runtime_error("Failed to allocate image memory! Error Code: " + NT_CHECK_RESULT(result));
 	}
 
-	vkBindImageMemory(mLogicalDevice->GetLogicalDevice(), mImage, mImageMemory, 0);
+	vkBindImageMemory(mContext->mLogicalDevice->GetLogicalDevice(), mImage, mImageMemory, 0);
 }
 
 void ImageWrapper::CreateTextureImage(std::string filename) {
@@ -78,7 +79,7 @@ void ImageWrapper::CreateTextureImage(std::string filename) {
 	VkDeviceSize imageSize;
 	stbi_uc* imageData = LoadTextureFile(filename, &width, &height, &imageSize);
 
-	BufferWrapper stagingBuffer(mPhysicalDevice, mLogicalDevice, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	BufferWrapper stagingBuffer(mContext, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	stagingBuffer.MapBufferMemory(imageData, imageSize);
 
@@ -86,11 +87,11 @@ void ImageWrapper::CreateTextureImage(std::string filename) {
 
 	CreateImage(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	TransitionImageLayout(mLogicalDevice, mGraphicsCommandPool, this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	TransitionImageLayout(mContext, mGraphicsCommandPool, this, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	CopyImageBuffer(mLogicalDevice, mGraphicsCommandPool, &stagingBuffer, this, width, height);
+	CopyImageBuffer(mContext, mGraphicsCommandPool, &stagingBuffer, this, width, height);
 
-	TransitionImageLayout(mLogicalDevice, mGraphicsCommandPool, this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	TransitionImageLayout(mContext, mGraphicsCommandPool, this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 stbi_uc* LoadTextureFile(std::string filename, int* width, int* height, VkDeviceSize* imageSize) {
@@ -107,9 +108,9 @@ stbi_uc* LoadTextureFile(std::string filename, int* width, int* height, VkDevice
 	return image;
 }
 
-void CopyImageBuffer(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tPool, BufferWrapper* srcBuffer, ImageWrapper* dstImage, uint32_t width, uint32_t height) {
+void CopyImageBuffer(Context* context, CommandPoolWrapper* tPool, BufferWrapper* srcBuffer, ImageWrapper* dstImage, uint32_t width, uint32_t height) {
 	// Create Transfer Command Buffer
-	CommandBufferWrapper* transferCommandBuffer = new CommandBufferWrapper(lDevice, tPool);
+	CommandBufferWrapper* transferCommandBuffer = new CommandBufferWrapper(context, tPool);
 
 	// Begin Recording Transfer Command Buffer struct
 	VkCommandBufferBeginInfo commandBufferBI = {
@@ -169,13 +170,13 @@ void CopyImageBuffer(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tPool, B
 	};
 
 	// Submit Transfer Command Buffer
-	result = vkQueueSubmit(lDevice->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	result = vkQueueSubmit(context->mLogicalDevice->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to submit copy command to queue! Error Code: " + NT_CHECK_RESULT(result));
 	}
 
 	// Wait for Transfer Queue to finish
-	result = vkQueueWaitIdle(lDevice->GetGraphicsQueue());
+	result = vkQueueWaitIdle(context->mLogicalDevice->GetGraphicsQueue());
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Data transferred." << std::endl;
 	} else {
@@ -183,12 +184,12 @@ void CopyImageBuffer(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tPool, B
 	}
 
 	// Free Transfer Command Buffer
-	vkFreeCommandBuffers(lDevice->GetLogicalDevice(), tPool->GetCommandPool(), 1, &buffer);
+	vkFreeCommandBuffers(context->mLogicalDevice->GetLogicalDevice(), tPool->GetCommandPool(), 1, &buffer);
 }
 
-void TransitionImageLayout(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tPool, ImageWrapper* image, VkImageLayout oldLayout, VkImageLayout newLayout) {
+void TransitionImageLayout(Context* context, CommandPoolWrapper* tPool, ImageWrapper* image, VkImageLayout oldLayout, VkImageLayout newLayout) {
 	// Create Transfer Command Buffer
-	CommandBufferWrapper* transferCommandBuffer = new CommandBufferWrapper(lDevice, tPool);
+	CommandBufferWrapper* transferCommandBuffer = new CommandBufferWrapper(context, tPool);
 
 	// Begin Recording Transfer Command Buffer struct
 	VkCommandBufferBeginInfo commandBufferBI = {
@@ -272,13 +273,13 @@ void TransitionImageLayout(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tP
 	};
 
 	// Submit Transfer Command Buffer
-	result = vkQueueSubmit(lDevice->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	result = vkQueueSubmit(context->mLogicalDevice->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to submit copy command to queue! Error Code: " + NT_CHECK_RESULT(result));
 	}
 
 	// Wait for Transfer Queue to finish
-	result = vkQueueWaitIdle(lDevice->GetGraphicsQueue());
+	result = vkQueueWaitIdle(context->mLogicalDevice->GetGraphicsQueue());
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Data transferred." << std::endl;
 	} else {
@@ -286,5 +287,5 @@ void TransitionImageLayout(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tP
 	}
 
 	// Free Transfer Command Buffer
-	vkFreeCommandBuffers(lDevice->GetLogicalDevice(), tPool->GetCommandPool(), 1, &buffer);
+	vkFreeCommandBuffers(context->mLogicalDevice->GetLogicalDevice(), tPool->GetCommandPool(), 1, &buffer);
 }

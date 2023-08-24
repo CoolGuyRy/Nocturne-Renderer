@@ -1,25 +1,26 @@
 #include "BufferWrapper.h"
 #include "globals.h"
+#include "Context.h"
 #include "PhysicalDeviceWrapper.h"
 #include "LogicalDeviceWrapper.h"
 #include "CommandPoolWrapper.h"
 #include "CommandBufferWrapper.h"
 #include "ImageWrapper.h"
 
-BufferWrapper::BufferWrapper(PhysicalDeviceWrapper* pDevice, LogicalDeviceWrapper* lDevice, VkDeviceSize dSize, VkBufferUsageFlags uFlags, VkMemoryPropertyFlags pFlags) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice) {
+BufferWrapper::BufferWrapper(Context* context, VkDeviceSize dSize, VkBufferUsageFlags uFlags, VkMemoryPropertyFlags pFlags) : mContext(context) {
 	CreateBuffer(dSize, uFlags, pFlags);
 }
 
 BufferWrapper::~BufferWrapper() {
-	vkDestroyBuffer(mLogicalDevice->GetLogicalDevice(), mBuffer, nullptr); std::cout << "Success: Buffer destroyed." << std::endl;
-	vkFreeMemory(mLogicalDevice->GetLogicalDevice(), mBufferMemory, nullptr); std::cout << "Success: Buffer Memory freed." << std::endl;
+	vkDestroyBuffer(mContext->mLogicalDevice->GetLogicalDevice(), mBuffer, nullptr); std::cout << "Success: Buffer destroyed." << std::endl;
+	vkFreeMemory(mContext->mLogicalDevice->GetLogicalDevice(), mBufferMemory, nullptr); std::cout << "Success: Buffer Memory freed." << std::endl;
 }
 
 void BufferWrapper::MapBufferMemory(void* iData, VkDeviceSize dSize) {
 	void* data;
-	vkMapMemory(mLogicalDevice->GetLogicalDevice(), mBufferMemory, 0, dSize, 0, &data);
+	vkMapMemory(mContext->mLogicalDevice->GetLogicalDevice(), mBufferMemory, 0, dSize, 0, &data);
 	memcpy(data, iData, static_cast<size_t>(dSize));
-	vkUnmapMemory(mLogicalDevice->GetLogicalDevice(), mBufferMemory);
+	vkUnmapMemory(mContext->mLogicalDevice->GetLogicalDevice(), mBufferMemory);
 }
 
 VkBuffer BufferWrapper::GetBuffer() {
@@ -44,7 +45,7 @@ void BufferWrapper::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, 
 	};
 
 	// Create Buffer
-	VkResult result = vkCreateBuffer(mLogicalDevice->GetLogicalDevice(), &bufferCI, nullptr, &mBuffer);
+	VkResult result = vkCreateBuffer(mContext->mLogicalDevice->GetLogicalDevice(), &bufferCI, nullptr, &mBuffer);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Buffer created!" << std::endl;
 	} else {
@@ -53,18 +54,18 @@ void BufferWrapper::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, 
 
 	// Grab Buffer Memory Requirements
 	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(mLogicalDevice->GetLogicalDevice(), mBuffer, &memoryRequirements);
+	vkGetBufferMemoryRequirements(mContext->mLogicalDevice->GetLogicalDevice(), mBuffer, &memoryRequirements);
 
 	// Allocate Memory for Buffer struct
 	VkMemoryAllocateInfo memoryAI = {
 		VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,																								// sType
 		nullptr,																															// pNext
 		memoryRequirements.size,																											// allocationSize
-		FindMemoryTypeIndex(mPhysicalDevice->GetPhysicalDevice(), memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)	// memoryTypeIndex
+		FindMemoryTypeIndex(mContext->mPhysicalDevice->GetPhysicalDevice(), memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)	// memoryTypeIndex
 	};
 
 	// Allocate Memory for Buffer
-	result = vkAllocateMemory(mLogicalDevice->GetLogicalDevice(), &memoryAI, nullptr, &mBufferMemory);
+	result = vkAllocateMemory(mContext->mLogicalDevice->GetLogicalDevice(), &memoryAI, nullptr, &mBufferMemory);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Buffer Memory allocated!" << std::endl;
 	} else {
@@ -72,12 +73,12 @@ void BufferWrapper::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, 
 	}
 
 	// Bind Buffer Memory
-	vkBindBufferMemory(mLogicalDevice->GetLogicalDevice(), mBuffer, mBufferMemory, 0);
+	vkBindBufferMemory(mContext->mLogicalDevice->GetLogicalDevice(), mBuffer, mBufferMemory, 0);
 }
 
-void CopyBuffer(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tCommandPool, BufferWrapper* srcBuffer, BufferWrapper* dstBuffer, VkDeviceSize bufferSize) {
+void CopyBuffer(Context* context, CommandPoolWrapper* tCommandPool, BufferWrapper* srcBuffer, BufferWrapper* dstBuffer, VkDeviceSize bufferSize) {
 	// Create Transfer Command Buffer
-	CommandBufferWrapper* transferCommandBuffer = new CommandBufferWrapper(lDevice, tCommandPool);
+	CommandBufferWrapper* transferCommandBuffer = new CommandBufferWrapper(context, tCommandPool);
 
 	// Begin Recording Transfer Command Buffer struct
 	VkCommandBufferBeginInfo commandBufferBI = {
@@ -121,13 +122,13 @@ void CopyBuffer(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tCommandPool,
 	};
 
 	// Submit Transfer Command Buffer
-	result = vkQueueSubmit(lDevice->GetTransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	result = vkQueueSubmit(context->mLogicalDevice->GetTransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to submit copy command to queue! Error Code: " + NT_CHECK_RESULT(result));
 	}
 
 	// Wait for Transfer Queue to finish
-	result = vkQueueWaitIdle(lDevice->GetTransferQueue());
+	result = vkQueueWaitIdle(context->mLogicalDevice->GetTransferQueue());
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Data transferred." << std::endl;
 	} else {
@@ -135,5 +136,5 @@ void CopyBuffer(LogicalDeviceWrapper* lDevice, CommandPoolWrapper* tCommandPool,
 	}
 
 	// Free Transfer Command Buffer
-	vkFreeCommandBuffers(lDevice->GetLogicalDevice(), tCommandPool->GetCommandPool(), 1, &buffer);
+	vkFreeCommandBuffers(context->mLogicalDevice->GetLogicalDevice(), tCommandPool->GetCommandPool(), 1, &buffer);
 }

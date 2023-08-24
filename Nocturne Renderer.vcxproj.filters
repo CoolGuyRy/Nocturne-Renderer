@@ -43,7 +43,7 @@
     <ClCompile Include="CommandPoolWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DescriptorSetWrapper.cpp">
+    <ClCompile Include="DescriptorWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FramebufferWrapper.cpp">
@@ -97,6 +97,9 @@
     <ClCompile Include="SamplerWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BufferWrapper.h">
@@ -108,7 +111,7 @@
     <ClInclude Include="CommandPoolWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DescriptorSetWrapper.h">
+    <ClInclude Include="DescriptorWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FramebufferWrapper.h">
@@ -163,6 +166,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SamplerWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
