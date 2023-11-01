@@ -192,7 +192,6 @@
     <ClInclude Include="ImageViewWrapper.h" />
     <ClInclude Include="ImageWrapper.h" />
     <ClInclude Include="InstanceWrapper.h" />
-    <ClInclude Include="Libraries\stb_image.h" />
     <ClInclude Include="LogicalDeviceWrapper.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PhysicalDeviceWrapper.h" />

@@ -210,7 +210,7 @@ void DescriptorPoolWrapper::CreateDynamicDescriptorPool() {
 void DescriptorPoolWrapper::CreateTextureDescriptorPool() {
 	VkDescriptorPoolSize texturePoolSize = {
 		.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		.descriptorCount = MAX_OBJECTS
+		.descriptorCount = 1
 	};
 
 	VkDescriptorPoolCreateInfo texturePoolCI = {

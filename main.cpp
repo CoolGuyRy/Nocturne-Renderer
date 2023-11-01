@@ -35,7 +35,6 @@ int RunNocturne() {
 	try {
 		PreCompileShaders();
 
-		WindowWrapper gWindow;
 		Renderer gRenderer;
 
 		float angle = 0.0f;

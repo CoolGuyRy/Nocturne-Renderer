@@ -162,9 +162,6 @@
     <ClInclude Include="ImageWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Libraries\stb_image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SamplerWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
