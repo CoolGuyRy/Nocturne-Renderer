@@ -158,52 +158,12 @@
     <None Include="Resources\Shaders\simple.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BufferWrapper.cpp" />
-    <ClCompile Include="CommandBufferWrapper.cpp" />
-    <ClCompile Include="CommandPoolWrapper.cpp" />
-    <ClCompile Include="Context.cpp" />
-    <ClCompile Include="DescriptorWrapper.cpp" />
-    <ClCompile Include="FramebufferWrapper.cpp" />
-    <ClCompile Include="ImageViewWrapper.cpp" />
-    <ClCompile Include="ImageWrapper.cpp" />
-    <ClCompile Include="InstanceWrapper.cpp" />
-    <ClCompile Include="LogicalDeviceWrapper.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="PhysicalDeviceWrapper.cpp" />
-    <ClCompile Include="PipelineWrapper.cpp" />
     <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="RenderPassWrapper.cpp" />
-    <ClCompile Include="SamplerWrapper.cpp" />
-    <ClCompile Include="ShaderWrapper.cpp" />
-    <ClCompile Include="SurfaceWrapper.cpp" />
-    <ClCompile Include="SwapchainWrapper.cpp" />
-    <ClCompile Include="SynchronizationWrapper.cpp" />
-    <ClCompile Include="WindowWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BufferWrapper.h" />
-    <ClInclude Include="CommandBufferWrapper.h" />
-    <ClInclude Include="CommandPoolWrapper.h" />
-    <ClInclude Include="Context.h" />
-    <ClInclude Include="DescriptorWrapper.h" />
-    <ClInclude Include="FramebufferWrapper.h" />
     <ClInclude Include="globals.h" />
-    <ClInclude Include="ImageViewWrapper.h" />
-    <ClInclude Include="ImageWrapper.h" />
-    <ClInclude Include="InstanceWrapper.h" />
-    <ClInclude Include="LogicalDeviceWrapper.h" />
-    <ClInclude Include="Mesh.h" />
-    <ClInclude Include="PhysicalDeviceWrapper.h" />
-    <ClInclude Include="PipelineWrapper.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="RenderPassWrapper.h" />
-    <ClInclude Include="SamplerWrapper.h" />
-    <ClInclude Include="ShaderWrapper.h" />
-    <ClInclude Include="SurfaceWrapper.h" />
-    <ClInclude Include="SwapchainWrapper.h" />
-    <ClInclude Include="SynchronizationWrapper.h" />
-    <ClInclude Include="WindowWrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

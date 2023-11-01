@@ -1,13 +1,9 @@
-#define GLFW_INCLUDE_VULKAN
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include <iostream>
 #include <filesystem>
 
-#include "WindowWrapper.h"
 #include "Renderer.h"
-#include "Context.h"
+
+using namespace std;
 
 void PreCompileShaders() {
 	std::string pathToPrint = std::filesystem::current_path().string() + "\\Resources\\Shaders\\";
@@ -29,7 +25,7 @@ void PreCompileShaders() {
 	}
 }
 
-int RunNocturne() {
+int main() {
 	int gProgramSuccess = EXIT_SUCCESS;
 
 	try {
@@ -37,51 +33,9 @@ int RunNocturne() {
 
 		Renderer gRenderer;
 
-		float angle = 0.0f;
-		float deltaTime = 0.0f;
-		float lastTime = 0.0f;
+		gRenderer.Run();
 
-		while (!glfwWindowShouldClose(gRenderer.GetContext()->mWindow->GetWindow())) {
-			float now = (float)glfwGetTime();
-			deltaTime = now - lastTime;
-			lastTime = now;
-
-			glfwPollEvents();
-
-			angle = angle + 1.0f * deltaTime;
-
-			glm::mat4 model1(1.0f);
-
-			model1 = glm::scale(model1, glm::vec3(0.5f, 0.5f, 0.5f));
-
-			model1 = glm::translate(model1, glm::vec3(-2.0f, 0.0f, 0.0f));
-
-			model1 = glm::rotate(model1, angle, glm::vec3(1.0f, 0.0f, 1.0f));			
-
-			gRenderer.UpdateModel(0, model1);
-
-			glm::mat4 model2(1.0f);
-
-			model2 = glm::scale(model2, glm::vec3(0.5f, 0.5f, 0.5f));
-
-			model2 = glm::translate(model2, glm::vec3(2.0f, 0.0f, 0.0f));
-
-			model2 = glm::rotate(model2, -angle, glm::vec3(1.0f, 0.0f, 1.0f));
-
-			gRenderer.UpdateModel(1, model2);
-
-			glm::mat4 view(1.0f);
-
-			view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
-
-			view = glm::rotate(view, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-
-			gRenderer.UpdateCamera(view);
-
-			gRenderer.Draw();
-		}
-
-	} catch (const std::runtime_error& e) {
+	} catch (const std::runtime_error & e) {
 		std::cout << "Nocturne Error: " << e.what() << std::endl;
 		gProgramSuccess = EXIT_FAILURE;
 	}
@@ -91,42 +45,4 @@ int RunNocturne() {
 	#endif
 
 	return gProgramSuccess;
-}
-
-/*
-int TestNocturne() {
-	int gProgramSuccess = EXIT_SUCCESS;
-
-	try {
-		PreCompileShaders();
-
-		Context gContext;
-
-		float angle = 0.0f;
-		float deltaTime = 0.0f;
-		float lastTime = 0.0f;
-
-		while (!glfwWindowShouldClose(gContext.mWindowWrapper->GetWindow())) {
-			float now = (float)glfwGetTime();
-			deltaTime = now - lastTime;
-			lastTime = now;
-
-			glfwPollEvents();
-		}
-
-	} catch (const std::runtime_error& e) {
-		std::cout << "Nocturne Error: " << e.what() << std::endl;
-		gProgramSuccess = EXIT_FAILURE;
-	}
-
-	#ifndef NDEBUG
-		system("PAUSE");
-	#endif
-
-	return gProgramSuccess;
-}
-*/
-
-int main() {
-	return RunNocturne();
 }

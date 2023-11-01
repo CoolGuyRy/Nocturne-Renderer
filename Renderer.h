@@ -1,92 +1,71 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 #include <vector>
-#include <iostream>
-
-class Context;
-class ShaderWrapper;
-class PipelineWrapper;
-class FramebufferWrapper;
-class CommandPoolWrapper;
-class CommandBufferWrapper;
-class SemaphoreWrapper;
-class FenceWrapper;
-class BufferWrapper;
-class Mesh;
-class DescriptorSetLayoutWrapper;
-class DescriptorPoolWrapper;
-class DescriptorSetWrapper;
-class ImageWrapper;
-class ImageViewWrapper;
-class SamplerWrapper;
-
-struct UboViewProjection {
-	glm::mat4 mProjection;
-	glm::mat4 mView;
-};
-
-/*
-
-	
-
-*/
+#include <GLFW/glfw3.h>
 
 class Renderer {
 public:
 	Renderer();
 	~Renderer();
 
-	void Draw();
-
-	void UpdateModel(int, glm::mat4);
-
-	void UpdateCamera(glm::mat4);
-
-	Context* GetContext();
+	void Run();
 private:
-	void RecordCommands();
+	// Run() Support Functions
+	void Input();
+	void Update(double);
+	void Render();
 
-	void allocateDynamicBufferTransferSpace();
+	// Window Member / Functions
+	GLFWwindow* mWindow;
+	void CreateGLFWWindow();
+	void DestroyGLFWWindow();
 
-	std::vector<Mesh*> mMeshList;
+	// Instance Member / Functions
+	VkInstance mInstance;
+	std::vector<const char*> mExtensions;
+	void CreateInstance();
+	void DestroyInstance();
+	bool CheckInstanceExtensionSupport();
+	bool CheckValidationLayerSupport();
 
-	UboViewProjection mVP;
+	// Surface Member / Functions
+	VkSurfaceKHR mSurface;
+	VkSurfaceCapabilitiesKHR mSurfaceCapabilities;
+	VkSurfaceFormatKHR mBestSurfaceFormat;
+	VkPresentModeKHR mBestPresentMode;
+	std::vector<VkSurfaceFormatKHR> mAvailableSurfaceFormats;
+	std::vector<VkPresentModeKHR> mAvailablePresentModes;
+	void CreateSurface();
+	void DestroySurface();
+	void AcquireSurfaceProperties(VkPhysicalDevice);
 
-	int mCurrentFrame;
+	// Physical Device Member / Functions
+	VkPhysicalDevice mPhysicalDevice;
+	VkPhysicalDeviceProperties mPhysicalDeviceProperties;
+	VkPhysicalDeviceFeatures mPhysicalDeviceFeatures;
+	VkPhysicalDeviceMemoryProperties mPhysicalDeviceMemoryProperties;
+	struct QueueFamilyIndices {
+		int mGraphics = -1;
+		int mPresent = -1;
+		int mCompute = -1;
+		int mTransfer = -1;
+		int mSparseBinding = -1;
+	} mQueueFamilyIndices;
+	void RetrievePhysicalDevice();
+	bool CheckDeviceSuitable(VkPhysicalDevice);
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice);
+	void AssignQueueFamilyIndices();
+	void ValidateQueueFamilyIndices();
 
-	VkDeviceSize mMinUniformBufferOffset;
-	size_t mModelUniformAlignment;
-	glm::mat4* mModelTransferSpace;
-
-	Context* mContext;
-	PipelineWrapper* mPipeline;
-	std::vector<FramebufferWrapper*> mFramebuffers;
-	CommandPoolWrapper* mGraphicsCommandPool;
-	CommandPoolWrapper* mTransferCommandPool;
-	DescriptorPoolWrapper* mDescriptorPool;
-	DescriptorPoolWrapper* mTDescriptorPool;
-	ImageWrapper* mDepthImage;
-	ImageViewWrapper* mDepthImageView;
-	ImageWrapper* mTextureImage;
-	ImageViewWrapper* mTextureImageView;
-	std::vector<CommandBufferWrapper*> mCommandBuffers;
-	std::vector<SemaphoreWrapper*> mImageAvailableSemaphores;
-	std::vector<SemaphoreWrapper*> mRenderFinishedSemaphores;
-	std::vector<FenceWrapper*> mDrawFences;
-	DescriptorSetLayoutWrapper* mDescriptorSetLayout;
-	DescriptorSetLayoutWrapper* mTSDescriptorSetLayout;
-	std::vector<BufferWrapper*> mUniformBuffers;
-	std::vector<BufferWrapper*> mDynamicUniformBuffers;
-	std::vector<DescriptorSetWrapper*> mDescriptorSets;
-	DescriptorSetWrapper* mTextureDescriptorSet;
-	SamplerWrapper* mSampler;
+	// Logical Device Member / Functions
+	VkDevice mLogicalDevice;
+	VkQueue mGraphicsQueue;
+	VkQueue mPresentQueue;
+	VkQueue mTransferQueue;
+	void CreateLogicalDevice();
+	void DestroyLogicalDevice();
+	bool CheckDeviceExtensionSupport();
 };
 #endif
