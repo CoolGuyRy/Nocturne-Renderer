@@ -154,16 +154,22 @@
     <Text Include="TODOs.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="notsimple.frag" />
+    <None Include="notsimple.vert" />
     <None Include="Resources\Shaders\simple.frag" />
     <None Include="Resources\Shaders\simple.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ImageView.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="globals.h" />
+    <ClInclude Include="ImageView.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

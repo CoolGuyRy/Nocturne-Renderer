@@ -10,9 +10,16 @@ Renderer::Renderer() {
 	CreateSurface();
 	RetrievePhysicalDevice();
 	CreateLogicalDevice();
+	CreateSwapchain();
+	CreateRenderPass();
+	CreateGraphicsPipeline();
 }
 Renderer::~Renderer() {
+	vkDeviceWaitIdle(mLogicalDevice);
 	// Delete in reverse order
+	DestroyGraphicsPipeline();
+	DestroyRenderPass();
+	DestroySwapchain();
 	DestroyLogicalDevice();
 	DestroySurface();
 	DestroyInstance();
@@ -416,4 +423,355 @@ void Renderer::CreateLogicalDevice() {
 }
 void Renderer::DestroyLogicalDevice() {
 	vkDestroyDevice(mLogicalDevice, nullptr); std::cout << "Success: Logical Device destroyed." << std::endl;
+}
+
+void Renderer::CreateSwapchain() {
+	// Ask Surface to Provide Swapchain Details
+	AcquireSurfaceProperties(mPhysicalDevice);
+
+	// Describe the swapchain
+	VkSwapchainCreateInfoKHR swapchainCI = {
+		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+		.pNext = nullptr,
+		.flags = 0,
+		.surface = mSurface,
+		.minImageCount = 3,
+		.imageFormat = mBestSurfaceFormat.format,
+		.imageColorSpace = mBestSurfaceFormat.colorSpace,
+		.imageExtent = {
+			.width = WINDOW_WIDTH,
+			.height = WINDOW_HEIGHT
+		},
+		.imageArrayLayers = 1,
+		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 0,
+		.pQueueFamilyIndices = nullptr,
+		.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+		.presentMode = mBestPresentMode,
+		.clipped = VK_TRUE,
+		.oldSwapchain = VK_NULL_HANDLE
+	};
+
+	// Check if the queue families are the same
+	std::vector<uint32_t> queueFamilyIndices;
+	queueFamilyIndices.push_back(mQueueFamilyIndices.mGraphics);
+	if (mQueueFamilyIndices.mGraphics == mQueueFamilyIndices.mPresent) {
+		swapchainCI.queueFamilyIndexCount = (uint32_t)queueFamilyIndices.size();
+		swapchainCI.pQueueFamilyIndices = queueFamilyIndices.data();
+	} else {
+		queueFamilyIndices.push_back(mQueueFamilyIndices.mPresent);
+		swapchainCI.queueFamilyIndexCount = (uint32_t)queueFamilyIndices.size();
+		swapchainCI.pQueueFamilyIndices = queueFamilyIndices.data();
+		swapchainCI.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+	}
+
+	// Create the swapchain
+	VkResult result = vkCreateSwapchainKHR(mLogicalDevice, &swapchainCI, nullptr, &mSwapchain);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Swapchain created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create swapchain! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	// Establish the Swapchain Extent
+	mSwapchainExtent = {
+		.width = (uint32_t)WINDOW_WIDTH,
+		.height = (uint32_t)WINDOW_HEIGHT
+	};
+
+	// Grab the Swapchain Images
+	uint32_t swapchainImagesCount = 0;
+	vkGetSwapchainImagesKHR(mLogicalDevice, mSwapchain, &swapchainImagesCount, nullptr);
+	std::vector<VkImage> swapchainImages(swapchainImagesCount);
+	vkGetSwapchainImagesKHR(mLogicalDevice, mSwapchain, &swapchainImagesCount, swapchainImages.data());
+
+	// Create ImageViews for each Swapchain Image and push to mSwapchainImages vector
+	for (size_t i = 0; i < swapchainImages.size(); i++) {
+		mSwapchainImages.push_back({ swapchainImages.at(i), new ImageView(mLogicalDevice, swapchainImages.at(i), mBestSurfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT)});
+	}
+}
+void Renderer::DestroySwapchain() {
+	for (size_t i = 0; i < mSwapchainImages.size(); i++) {
+		delete mSwapchainImages.at(i).mImageView;
+	}
+	vkDestroySwapchainKHR(mLogicalDevice, mSwapchain, nullptr); std::cout << "Success: Swapchain destroyed." << std::endl;
+}
+
+void Renderer::CreateRenderPass() {
+	// Attachment Descriptions
+	// - Color Attachment
+	VkAttachmentDescription colorAttachment {
+		.flags = 0,
+		.format = mBestSurfaceFormat.format,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	};
+
+	// Put Attachments together in a vector
+	std::vector<VkAttachmentDescription> attachmentDescriptions = { colorAttachment };
+
+	// Attachment References
+	// - Color Attachment Reference
+	VkAttachmentReference colorAttachmentRef {
+		.attachment = 0,
+		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	};
+
+	// Subpass Descriptions
+	// - First Subpass
+	VkSubpassDescription firstSubpass {
+		.flags = 0,
+		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		.inputAttachmentCount = 0,
+		.pInputAttachments = nullptr,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &colorAttachmentRef,
+		.pResolveAttachments = nullptr,
+		.pDepthStencilAttachment = nullptr,
+		.preserveAttachmentCount = 0,
+		.pPreserveAttachments = nullptr
+	};
+
+	// Put Subpasses together in a vector
+	std::vector<VkSubpassDescription> subpasses = { firstSubpass };
+
+	// Subpass Dependencies
+	// - - Conversion from VK_IMAGE_LAYOUT_UNDEFINED to VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	VkSubpassDependency firstSubpassDependency {
+		.srcSubpass = VK_SUBPASS_EXTERNAL,
+		.dstSubpass = 0,
+		.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		.dependencyFlags = 0
+	};
+	VkSubpassDependency secondSubpassDependency {
+		.srcSubpass = 0,
+		.dstSubpass = VK_SUBPASS_EXTERNAL,
+		.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+		.dependencyFlags = 0
+	};
+
+	// Put Subpass Dependencies in a vector
+	std::vector<VkSubpassDependency> subpassDependencies = { firstSubpassDependency, secondSubpassDependency };
+
+	// Render Pass create info structure
+	VkRenderPassCreateInfo renderPassCI = {
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.attachmentCount = (uint32_t)attachmentDescriptions.size(),
+		.pAttachments = attachmentDescriptions.data(),
+		.subpassCount = (uint32_t)subpasses.size(),
+		.pSubpasses = subpasses.data(),
+		.dependencyCount = (uint32_t)subpassDependencies.size(),
+		.pDependencies = subpassDependencies.data()
+	};
+
+	// Create Render Pass
+	VkResult result = vkCreateRenderPass(mLogicalDevice, &renderPassCI, nullptr, &mRenderPass);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Render Pass created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create Render Pass! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+void Renderer::DestroyRenderPass() {
+	vkDestroyRenderPass(mLogicalDevice, mRenderPass, nullptr); std::cout << "Success: Render Pass destroyed." << std::endl;
+}
+
+void Renderer::CreateGraphicsPipeline() {
+	// Grab the shader file locations
+	std::vector<std::string> shaderFileNames = {
+		".\\Resources\\Shaders\\simple.vert.spv",
+		".\\Resources\\Shaders\\simple.frag.spv"
+	};
+
+	// Initialize ShaderWrapper classes
+	std::vector<Shader*> mShaders(shaderFileNames.size());
+	for (size_t i = 0; i < shaderFileNames.size(); i++) {
+		mShaders.at(i) = new Shader(mLogicalDevice, shaderFileNames[i]);
+	}
+
+	// Create the shader stage create info structs
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStageCIs(mShaders.size());
+	for (size_t i = 0; i < mShaders.size(); i++) {
+		shaderStageCIs.at(i) = mShaders.at(i)->GetShaderCI();
+	}
+
+	// Create the vertex input state create info struct
+	VkPipelineVertexInputStateCreateInfo vertexInputCI = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.vertexBindingDescriptionCount = 0,
+		.pVertexBindingDescriptions = nullptr,
+		.vertexAttributeDescriptionCount = 0,
+		.pVertexAttributeDescriptions = nullptr
+	};
+
+	// Create the input assembly state create info struct
+	VkPipelineInputAssemblyStateCreateInfo inputAssemblyCI = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		.primitiveRestartEnable = VK_FALSE
+	};
+
+	// Create the viewport state create info struct
+	VkViewport viewport = {
+		.x = 0.0f,
+		.y = 0.0f,
+		.width = (float)WINDOW_WIDTH,
+		.height = (float)WINDOW_HEIGHT,
+		.minDepth = 0.0f,
+		.maxDepth = 1.0f
+	};
+	VkRect2D scissor{
+		.offset = {
+			.x = 0,
+			.y = 0
+		},
+		.extent = {
+			.width = WINDOW_WIDTH, 
+			.height = WINDOW_HEIGHT
+		}
+	};
+	VkPipelineViewportStateCreateInfo viewportCI = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.viewportCount = 1,
+		.pViewports = &viewport,
+		.scissorCount = 1,
+		.pScissors = &scissor
+	};
+
+	// Create the rasterization state create info struct
+	VkPipelineRasterizationStateCreateInfo rasterizerCI = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.depthClampEnable = VK_FALSE,
+		.rasterizerDiscardEnable = VK_FALSE,
+		.polygonMode = VK_POLYGON_MODE_FILL,
+		.cullMode = VK_CULL_MODE_BACK_BIT,
+		.frontFace = VK_FRONT_FACE_CLOCKWISE,
+		.depthBiasEnable = VK_FALSE,
+		.depthBiasConstantFactor = 0.0f,
+		.depthBiasClamp = 0.0f,
+		.depthBiasSlopeFactor = 0.0f,
+		.lineWidth = 1.0f
+	};
+
+	// Create the multisample state create info struct
+	VkPipelineMultisampleStateCreateInfo multiSamplingCI = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+		.sampleShadingEnable = VK_FALSE,
+		.minSampleShading = 1.0f,
+		.pSampleMask = nullptr,
+		.alphaToCoverageEnable = VK_FALSE,
+		.alphaToOneEnable = VK_FALSE
+	};
+
+	// Create the depth stencil state create info struct
+	// TODO: Implement later
+
+	// Create the color blend attachment state struct
+	VkPipelineColorBlendAttachmentState colorBlendAttachment = {
+		.blendEnable = VK_TRUE,
+		.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+		.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+		.colorBlendOp = VK_BLEND_OP_ADD,
+		.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+		.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+		.alphaBlendOp = VK_BLEND_OP_ADD,
+		.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+	};
+	VkPipelineColorBlendStateCreateInfo colorBlendCI = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.logicOpEnable = VK_FALSE,
+		.logicOp = VK_LOGIC_OP_COPY,
+		.attachmentCount = 1,
+		.pAttachments = &colorBlendAttachment,
+		.blendConstants = { 
+			0.0f, 0.0f, 0.0f, 0.0f
+		}
+	};
+
+	// Create the pipeline layout create info struct
+	VkPipelineLayoutCreateInfo pipelineLayoutCI = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.setLayoutCount = 0,
+		.pSetLayouts = nullptr,
+		.pushConstantRangeCount = 0,
+		.pPushConstantRanges = nullptr
+	};
+
+	// Create the pipeline layout
+	VkResult result = vkCreatePipelineLayout(mLogicalDevice, &pipelineLayoutCI, nullptr, &mPipelineLayout);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Pipeline layout created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create a pipeline layout! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	// Create the graphics pipeline create info struct
+	VkGraphicsPipelineCreateInfo graphicsPipelineCI = {
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.stageCount = (uint32_t)shaderStageCIs.size(),
+		.pStages = shaderStageCIs.data(),
+		.pVertexInputState = &vertexInputCI,
+		.pInputAssemblyState = &inputAssemblyCI,
+		.pTessellationState = nullptr,
+		.pViewportState = &viewportCI,
+		.pRasterizationState = &rasterizerCI,
+		.pMultisampleState = &multiSamplingCI,
+		.pDepthStencilState = nullptr,
+		.pColorBlendState = &colorBlendCI,
+		.pDynamicState = nullptr,
+		.layout = mPipelineLayout,
+		.renderPass = mRenderPass,
+		.subpass = 0,
+		.basePipelineHandle = VK_NULL_HANDLE,
+		.basePipelineIndex = -1
+	};
+
+	result = vkCreateGraphicsPipelines(mLogicalDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCI, nullptr, &mPipeline);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Graphics pipeline created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create graphics pipeline! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	// Destroy Shader Modules, since graphics pipeline has been created
+	for (size_t i = 0; i < mShaders.size(); i++) {
+		vkDestroyShaderModule(mLogicalDevice, mShaders.at(i)->GetShaderModule(), nullptr);	std::cout << "Success: Shader module destroyed." << std::endl;
+	}
+}
+void Renderer::DestroyGraphicsPipeline() {
+	vkDestroyPipelineLayout(mLogicalDevice, mPipelineLayout, nullptr);	std::cout << "Success: Pipeline Layout Destroyed" << std::endl;
+	vkDestroyPipeline(mLogicalDevice, mPipeline, nullptr);	std::cout << "Success: Pipeline Destroyed" << std::endl;
 }

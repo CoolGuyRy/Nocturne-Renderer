@@ -5,6 +5,9 @@
 #include <vector>
 #include <GLFW/glfw3.h>
 
+#include "ImageView.h"
+#include "Shader.h"
+
 class Renderer {
 public:
 	Renderer();
@@ -17,12 +20,12 @@ private:
 	void Update(double);
 	void Render();
 
-	// Window Member / Functions
+	// Window Members / Functions
 	GLFWwindow* mWindow;
 	void CreateGLFWWindow();
 	void DestroyGLFWWindow();
 
-	// Instance Member / Functions
+	// Instance Members / Functions
 	VkInstance mInstance;
 	std::vector<const char*> mExtensions;
 	void CreateInstance();
@@ -30,7 +33,7 @@ private:
 	bool CheckInstanceExtensionSupport();
 	bool CheckValidationLayerSupport();
 
-	// Surface Member / Functions
+	// Surface Members / Functions
 	VkSurfaceKHR mSurface;
 	VkSurfaceCapabilitiesKHR mSurfaceCapabilities;
 	VkSurfaceFormatKHR mBestSurfaceFormat;
@@ -41,7 +44,7 @@ private:
 	void DestroySurface();
 	void AcquireSurfaceProperties(VkPhysicalDevice);
 
-	// Physical Device Member / Functions
+	// Physical Device Members / Functions
 	VkPhysicalDevice mPhysicalDevice;
 	VkPhysicalDeviceProperties mPhysicalDeviceProperties;
 	VkPhysicalDeviceFeatures mPhysicalDeviceFeatures;
@@ -59,13 +62,34 @@ private:
 	void AssignQueueFamilyIndices();
 	void ValidateQueueFamilyIndices();
 
-	// Logical Device Member / Functions
+	// Logical Device Members / Functions
 	VkDevice mLogicalDevice;
 	VkQueue mGraphicsQueue;
 	VkQueue mPresentQueue;
 	VkQueue mTransferQueue;
 	void CreateLogicalDevice();
 	void DestroyLogicalDevice();
-	bool CheckDeviceExtensionSupport();
+
+	// Swapchain Members / Functions
+	VkSwapchainKHR mSwapchain;
+	VkExtent2D mSwapchainExtent;
+	struct SwapchainImage {
+		VkImage mImage;
+		ImageView* mImageView;
+	};
+	std::vector<SwapchainImage> mSwapchainImages;
+	void CreateSwapchain();
+	void DestroySwapchain();
+
+	// Render Pass Members / Functions
+	VkRenderPass mRenderPass;
+	void CreateRenderPass();
+	void DestroyRenderPass();
+
+	// Graphics Pipeline Members / Functions
+	VkPipeline mPipeline;
+	VkPipelineLayout mPipelineLayout;
+	void CreateGraphicsPipeline();
+	void DestroyGraphicsPipeline();
 };
 #endif
