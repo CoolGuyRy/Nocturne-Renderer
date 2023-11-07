@@ -13,10 +13,20 @@ Renderer::Renderer() {
 	CreateSwapchain();
 	CreateRenderPass();
 	CreateGraphicsPipeline();
+	CreateFramebuffers();
+	CreateCommandPool(mGraphicsCommandPool, mQueueFamilyIndices.mGraphics);
+	CreateCommandPool(mTransferCommandPool, mQueueFamilyIndices.mTransfer);
+	AllocateCommandBuffer(mCommandBuffer, mGraphicsCommandPool);
+	CreateSyncObjects();
 }
 Renderer::~Renderer() {
 	vkDeviceWaitIdle(mLogicalDevice);
 	// Delete in reverse order
+	DestroySyncObjects();
+	FreeCommandBuffer(mCommandBuffer, mGraphicsCommandPool);
+	DestroyCommandPool(mTransferCommandPool);
+	DestroyCommandPool(mGraphicsCommandPool);
+	DestroyFrameBuffers();
 	DestroyGraphicsPipeline();
 	DestroyRenderPass();
 	DestroySwapchain();
@@ -45,7 +55,48 @@ void Renderer::Update(double deltaTime) {
 
 }
 void Renderer::Render() {
+	vkWaitForFences(mLogicalDevice, 1, &mInFlight, VK_TRUE, UINT64_MAX);
+	vkResetFences(mLogicalDevice, 1, &mInFlight);
 
+	uint32_t imageIndex;
+	vkAcquireNextImageKHR(mLogicalDevice, mSwapchain, UINT64_MAX, mImageAvailable, VK_NULL_HANDLE, &imageIndex);
+
+	vkResetCommandBuffer(mCommandBuffer, 0);
+	RecordCommandBuffer(mCommandBuffer, imageIndex);
+
+	std::vector<VkPipelineStageFlags> waitStages = {
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+	};
+	VkSubmitInfo submitInfo = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.pNext = nullptr,
+		.waitSemaphoreCount = 1,
+		.pWaitSemaphores = &mImageAvailable,
+		.pWaitDstStageMask = waitStages.data(),
+		.commandBufferCount = 1,
+		.pCommandBuffers = &mCommandBuffer,
+		.signalSemaphoreCount = 1,
+		.pSignalSemaphores = &mRenderFinished
+	};
+	VkResult result = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlight);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to submit draw command buffer. Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	VkPresentInfoKHR presentInfo = {
+		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+		.pNext = nullptr,
+		.waitSemaphoreCount = 1,
+		.pWaitSemaphores = &mRenderFinished,
+		.swapchainCount = 1,
+		.pSwapchains = &mSwapchain,
+		.pImageIndices = &imageIndex,
+		.pResults = nullptr
+	};
+	result = vkQueuePresentKHR(mPresentQueue, &presentInfo);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to present image to swapchain. Error Code: " + NT_CHECK_RESULT(result));
+	}
 }
 
 void Renderer::CreateGLFWWindow() {
@@ -772,6 +823,162 @@ void Renderer::CreateGraphicsPipeline() {
 	}
 }
 void Renderer::DestroyGraphicsPipeline() {
-	vkDestroyPipelineLayout(mLogicalDevice, mPipelineLayout, nullptr);	std::cout << "Success: Pipeline Layout Destroyed" << std::endl;
-	vkDestroyPipeline(mLogicalDevice, mPipeline, nullptr);	std::cout << "Success: Pipeline Destroyed" << std::endl;
+	vkDestroyPipelineLayout(mLogicalDevice, mPipelineLayout, nullptr);	std::cout << "Success: Pipeline Layout Destroyed." << std::endl;
+	vkDestroyPipeline(mLogicalDevice, mPipeline, nullptr);	std::cout << "Success: Pipeline Destroyed." << std::endl;
+}
+
+void Renderer::CreateFramebuffers() {
+	mFramebuffers.resize(mSwapchainImages.size());
+
+	for (size_t i = 0; i < mSwapchainImages.size(); i++) {
+		std::vector<VkImageView> attachments = {
+			mSwapchainImages[i].mImageView->GetImageView()
+		};
+
+		VkFramebufferCreateInfo framebufferCI = {
+			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.renderPass = mRenderPass,
+			.attachmentCount = (uint32_t)attachments.size(),
+			.pAttachments = attachments.data(),
+			.width = WINDOW_WIDTH,
+			.height = WINDOW_HEIGHT,
+			.layers = 1
+		};
+
+		VkResult result = vkCreateFramebuffer(mLogicalDevice, &framebufferCI, nullptr, &mFramebuffers.at(i));
+		if (result == VK_SUCCESS) {
+			std::cout << "Success: Framebuffer created." << std::endl;
+		} else {
+			throw std::runtime_error("Failed to create framebuffer! Error Code: " + NT_CHECK_RESULT(result));
+		}
+	}
+}
+void Renderer::DestroyFrameBuffers() {
+	for (auto fb : mFramebuffers) {
+		vkDestroyFramebuffer(mLogicalDevice, fb, nullptr); std::cout << "Success: Framebuffer destroyed." << std::endl;
+	}
+}
+
+void Renderer::CreateCommandPool(VkCommandPool& pool, uint32_t index) {
+	VkCommandPoolCreateInfo poolCI = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+		.queueFamilyIndex = index
+	};
+
+	VkResult result = vkCreateCommandPool(mLogicalDevice, &poolCI, nullptr, &pool);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Command pool created" << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create Command Pool! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+void Renderer::DestroyCommandPool(VkCommandPool pool) {
+	vkDestroyCommandPool(mLogicalDevice, pool, nullptr); std::cout << "Success: Command pool destroyed." << std::endl;
+}
+
+void Renderer::AllocateCommandBuffer(VkCommandBuffer& buffer, VkCommandPool pool) {
+	VkCommandBufferAllocateInfo commandBufferAI = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.commandPool = pool,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandBufferCount = 1
+	};
+
+	VkResult result = vkAllocateCommandBuffers(mLogicalDevice, &commandBufferAI, &buffer);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Command Buffer allocated." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to allocate command buffer! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+void Renderer::RecordCommandBuffer(VkCommandBuffer buffer, uint32_t imageIndex) {
+	VkCommandBufferBeginInfo beginInfo = {
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = 0,
+		.pInheritanceInfo = nullptr
+	};
+	VkResult result = vkBeginCommandBuffer(buffer, &beginInfo);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to record command buffer! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+		VkClearValue clearColor = { 
+			.color = {
+				0.11f, 0.24f, 0.36f, 1.0f
+			},
+		};
+		VkRenderPassBeginInfo renderPassBI = {
+			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+			.pNext = nullptr,
+			.renderPass = mRenderPass,
+			.framebuffer = mFramebuffers.at(imageIndex),
+			.renderArea = {
+				.offset = {
+					.x = 0,
+					.y = 0
+				},
+				.extent = mSwapchainExtent
+			},
+			.clearValueCount = 1,
+			.pClearValues = &clearColor
+		};
+		vkCmdBeginRenderPass(buffer, &renderPassBI, VK_SUBPASS_CONTENTS_INLINE);
+
+			vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
+
+			vkCmdDraw(buffer, 3, 1, 0, 0);
+
+		vkCmdEndRenderPass(buffer);
+
+	result = vkEndCommandBuffer(buffer);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to end record command buffer! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+void Renderer::FreeCommandBuffer(VkCommandBuffer buffer, VkCommandPool pool) {
+	vkFreeCommandBuffers(mLogicalDevice, pool, 1, &buffer); std::cout << "Success: Command Buffer freed." << std::endl;
+}
+
+void Renderer::CreateSyncObjects() {
+	VkSemaphoreCreateInfo semaphoreCI = {
+		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0
+	};
+	VkFenceCreateInfo fenceCI = {
+		.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = VK_FENCE_CREATE_SIGNALED_BIT
+	};
+
+	VkResult result = vkCreateSemaphore(mLogicalDevice, &semaphoreCI, nullptr, &mImageAvailable);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Semaphore created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create a semaphore! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	result = vkCreateSemaphore(mLogicalDevice, &semaphoreCI, nullptr, &mRenderFinished);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Semaphore created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create a semaphore! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	result = vkCreateFence(mLogicalDevice, &fenceCI, nullptr, &mInFlight);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Fence created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create fence! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+void Renderer::DestroySyncObjects() {
+	vkDestroyFence(mLogicalDevice, mInFlight, nullptr); std::cout << "Success: Fence destroyed." << std::endl;
+	vkDestroySemaphore(mLogicalDevice, mRenderFinished, nullptr); std::cout << "Success: Semaphore destroyed." << std::endl;
+	vkDestroySemaphore(mLogicalDevice, mImageAvailable, nullptr); std::cout << "Success: Semaphore destroyed." << std::endl;
 }

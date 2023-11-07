@@ -91,5 +91,29 @@ private:
 	VkPipelineLayout mPipelineLayout;
 	void CreateGraphicsPipeline();
 	void DestroyGraphicsPipeline();
+
+	// Framebuffer Memebers / Functions
+	std::vector<VkFramebuffer> mFramebuffers;
+	void CreateFramebuffers();
+	void DestroyFrameBuffers();
+
+	// Command Pool Members / Functions
+	VkCommandPool mGraphicsCommandPool;
+	VkCommandPool mTransferCommandPool;
+	void CreateCommandPool(VkCommandPool&, uint32_t);
+	void DestroyCommandPool(VkCommandPool);
+
+	// Command Buffer Members / Functions
+	VkCommandBuffer mCommandBuffer;
+	void AllocateCommandBuffer(VkCommandBuffer&, VkCommandPool);
+	void RecordCommandBuffer(VkCommandBuffer, uint32_t);
+	void FreeCommandBuffer(VkCommandBuffer, VkCommandPool);
+
+	// Synchronization Members / Functions
+	VkSemaphore mImageAvailable;
+	VkSemaphore mRenderFinished;
+	VkFence mInFlight;
+	void CreateSyncObjects();
+	void DestroySyncObjects();
 };
 #endif
