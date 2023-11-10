@@ -52,7 +52,7 @@ void Renderer::Input() {
 	glfwPollEvents();
 }
 void Renderer::Update(double deltaTime) {
-
+	glfwSetWindowTitle(mWindow, (APPLICATION_TITLE + " | FPS: " + std::to_string(int(1.0 / deltaTime))).c_str());
 }
 void Renderer::Render() {
 	vkWaitForFences(mLogicalDevice, 1, &mInFlight, VK_TRUE, UINT64_MAX);
@@ -598,24 +598,15 @@ void Renderer::CreateRenderPass() {
 	VkSubpassDependency firstSubpassDependency {
 		.srcSubpass = VK_SUBPASS_EXTERNAL,
 		.dstSubpass = 0,
-		.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
-		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		.dependencyFlags = 0
-	};
-	VkSubpassDependency secondSubpassDependency {
-		.srcSubpass = 0,
-		.dstSubpass = VK_SUBPASS_EXTERNAL,
 		.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-		.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.srcAccessMask = 0,
+		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		.dependencyFlags = 0
 	};
 
 	// Put Subpass Dependencies in a vector
-	std::vector<VkSubpassDependency> subpassDependencies = { firstSubpassDependency, secondSubpassDependency };
+	std::vector<VkSubpassDependency> subpassDependencies = { firstSubpassDependency };
 
 	// Render Pass create info structure
 	VkRenderPassCreateInfo renderPassCI = {

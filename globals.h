@@ -13,10 +13,7 @@ const bool ENABLE_VALIDATION_LAYERS = false;
 const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
 
-const uint32_t MAX_CONCURRENT_FRAMES = 3;
-const uint32_t MAX_FRAMES_DRAW = 2;
-const uint32_t SWAPCHAIN_IMAGE_COUNT = 3;
-const uint32_t MAX_OBJECTS = 20;
+const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<const char*> ENABLED_VALIDATION_LAYERS = {
 	"VK_LAYER_KHRONOS_validation",
@@ -50,7 +47,7 @@ const VkPhysicalDeviceFeatures ENABLED_PHYSICAL_DEVICE_FEATURES = {
 	VK_FALSE, // VkBool32    largePoints;
 	VK_FALSE, // VkBool32    alphaToOne;
 	VK_FALSE, // VkBool32    multiViewport;
-	VK_TRUE,  // VkBool32    samplerAnisotropy;
+	VK_FALSE, // VkBool32    samplerAnisotropy;
 	VK_FALSE, // VkBool32    textureCompressionETC2;
 	VK_FALSE, // VkBool32    textureCompressionASTC_LDR;
 	VK_FALSE, // VkBool32    textureCompressionBC;
