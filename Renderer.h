@@ -16,6 +16,7 @@ public:
 	void Run();
 private:
 	// Run() Support Functions
+	unsigned mCurrentFrame;
 	void Input();
 	void Update(double);
 	void Render();
@@ -104,15 +105,15 @@ private:
 	void DestroyCommandPool(VkCommandPool);
 
 	// Command Buffer Members / Functions
-	VkCommandBuffer mCommandBuffer;
-	void AllocateCommandBuffer(VkCommandBuffer&, VkCommandPool);
+	std::vector<VkCommandBuffer> mCommandBuffers;
+	void AllocateCommandBuffers(VkCommandPool);
 	void RecordCommandBuffer(VkCommandBuffer, uint32_t);
-	void FreeCommandBuffer(VkCommandBuffer, VkCommandPool);
+	void FreeCommandBuffers(VkCommandPool);
 
 	// Synchronization Members / Functions
-	VkSemaphore mImageAvailable;
-	VkSemaphore mRenderFinished;
-	VkFence mInFlight;
+	std::vector<VkSemaphore> mImageAvailable;
+	std::vector<VkSemaphore> mRenderFinished;
+	std::vector<VkFence> mInFlight;
 	void CreateSyncObjects();
 	void DestroySyncObjects();
 };
