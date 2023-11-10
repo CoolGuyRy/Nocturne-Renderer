@@ -654,15 +654,19 @@ void Renderer::CreateGraphicsPipeline() {
 		shaderStageCIs.at(i) = mShaders.at(i)->GetShaderCI();
 	}
 
+	// Grab Vertex Description Info from Vertex Class
+	auto bindingDescription = Vertex::GetBindingDescription();
+	auto attributeDescription = Vertex::GetAttributeDescriptions();
+
 	// Create the vertex input state create info struct
 	VkPipelineVertexInputStateCreateInfo vertexInputCI = {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.vertexBindingDescriptionCount = 0,
-		.pVertexBindingDescriptions = nullptr,
-		.vertexAttributeDescriptionCount = 0,
-		.pVertexAttributeDescriptions = nullptr
+		.vertexBindingDescriptionCount = 1,
+		.pVertexBindingDescriptions = &bindingDescription,
+		.vertexAttributeDescriptionCount = (uint32_t)attributeDescription.size(),
+		.pVertexAttributeDescriptions = attributeDescription.data()
 	};
 
 	// Create the input assembly state create info struct
