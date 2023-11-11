@@ -16,6 +16,7 @@ Renderer::Renderer() {
 	CreateFramebuffers();
 	CreateCommandPool(mGraphicsCommandPool, mQueueFamilyIndices.mGraphics);
 	CreateCommandPool(mTransferCommandPool, mQueueFamilyIndices.mTransfer);
+	CreateVertexBuffer();
 	AllocateCommandBuffers(mGraphicsCommandPool);
 	CreateSyncObjects();
 }
@@ -24,6 +25,7 @@ Renderer::~Renderer() {
 	// Delete in reverse order
 	DestroySyncObjects();
 	FreeCommandBuffers(mGraphicsCommandPool);
+	DestroyVertexBuffer();
 	DestroyCommandPool(mTransferCommandPool);
 	DestroyCommandPool(mGraphicsCommandPool);
 	DestroyFrameBuffers();
@@ -930,7 +932,12 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer buffer, uint32_t imageIndex) 
 
 			vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
 
-			vkCmdDraw(buffer, 3, 1, 0, 0);
+			VkBuffer vertexBuffers[] = { mVertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+
+			vkCmdBindVertexBuffers(mCommandBuffers.at(mCurrentFrame), 0, 1, vertexBuffers, offsets);
+
+			vkCmdDraw(buffer, (uint32_t)vertices.size(), 1, 0, 0);
 
 		vkCmdEndRenderPass(buffer);
 
@@ -988,4 +995,52 @@ void Renderer::DestroySyncObjects() {
 		vkDestroySemaphore(mLogicalDevice, mRenderFinished.at(i), nullptr); std::cout << "Success: Semaphore destroyed." << std::endl;
 		vkDestroySemaphore(mLogicalDevice, mImageAvailable.at(i), nullptr); std::cout << "Success: Semaphore destroyed." << std::endl;
 	}
+}
+
+void Renderer::CreateVertexBuffer() {
+	VkBufferCreateInfo bufferCI = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.size = sizeof(vertices[0]) * vertices.size(),
+		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 0,
+		.pQueueFamilyIndices = nullptr
+	};
+
+	VkResult result = vkCreateBuffer(mLogicalDevice, &bufferCI, nullptr, &mVertexBuffer);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Buffer created!" << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create Buffer! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(mLogicalDevice, mVertexBuffer, &memRequirements);
+
+	VkMemoryAllocateInfo memoryAI = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.allocationSize = memRequirements.size,
+		.memoryTypeIndex = FindMemoryTypeIndex(mPhysicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+	};
+
+	result = vkAllocateMemory(mLogicalDevice, &memoryAI, nullptr, &mVertexBufferMemory);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Buffer Memory allocated!" << std::endl;
+	} else {
+		throw std::runtime_error("Failed to allocate Buffer Memory! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	vkBindBufferMemory(mLogicalDevice, mVertexBuffer, mVertexBufferMemory, 0);
+
+	void* data;
+	vkMapMemory(mLogicalDevice, mVertexBufferMemory, 0, bufferCI.size, 0, &data);
+		memcpy(data, vertices.data(), (size_t)bufferCI.size);
+	vkUnmapMemory(mLogicalDevice, mVertexBufferMemory);
+}
+void Renderer::DestroyVertexBuffer() {
+	vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr); std::cout << "Success: Buffer destroyed." << std::endl;
+	vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr); std::cout << "Success: Buffer Memory freed." << std::endl;
 }
