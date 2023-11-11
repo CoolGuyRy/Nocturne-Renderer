@@ -9,6 +9,7 @@
 
 #include "ImageView.h"
 #include "Shader.h"
+#include "Buffer.h"
 
 class Vertex {
 public:
@@ -147,7 +148,11 @@ private:
 
 	// Command Buffer Members / Functions
 	std::vector<VkCommandBuffer> mCommandBuffers;
-	void AllocateCommandBuffers(VkCommandPool);
+
+	void AllocateCommandBuffer(VkCommandBuffer&, VkCommandPool);
+	void FreeCommandBuffer(VkCommandBuffer, VkCommandPool);
+
+	void AllocateGraphicsCommandBuffers();
 	void RecordCommandBuffer(VkCommandBuffer, uint32_t);
 	void FreeCommandBuffers(VkCommandPool);
 
@@ -158,9 +163,10 @@ private:
 	void CreateSyncObjects();
 	void DestroySyncObjects();
 
-	// Vertex Buffer Members / Functions
-	VkBuffer mVertexBuffer;
-	VkDeviceMemory mVertexBufferMemory;
+	// Buffer Members / Functions
+	void CopyBuffer(Buffer*, Buffer*, VkDeviceSize);
+
+	Buffer* mVertexBuffer;
 	void CreateVertexBuffer();
 	void DestroyVertexBuffer();
 };

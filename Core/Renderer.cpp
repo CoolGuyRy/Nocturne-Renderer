@@ -17,7 +17,7 @@ Renderer::Renderer() {
 	CreateCommandPool(mGraphicsCommandPool, mQueueFamilyIndices.mGraphics);
 	CreateCommandPool(mTransferCommandPool, mQueueFamilyIndices.mTransfer);
 	CreateVertexBuffer();
-	AllocateCommandBuffers(mGraphicsCommandPool);
+	AllocateGraphicsCommandBuffers();
 	CreateSyncObjects();
 }
 Renderer::~Renderer() {
@@ -879,22 +879,31 @@ void Renderer::DestroyCommandPool(VkCommandPool pool) {
 	vkDestroyCommandPool(mLogicalDevice, pool, nullptr); std::cout << "Success: Command pool destroyed." << std::endl;
 }
 
-void Renderer::AllocateCommandBuffers(VkCommandPool pool) {
-	mCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-
+void Renderer::AllocateCommandBuffer(VkCommandBuffer& buffer, VkCommandPool pool) {
 	VkCommandBufferAllocateInfo commandBufferAI = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 		.pNext = nullptr,
 		.commandPool = pool,
 		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-		.commandBufferCount = (uint32_t)mCommandBuffers.size()
+		.commandBufferCount = 1
 	};
 
-	VkResult result = vkAllocateCommandBuffers(mLogicalDevice, &commandBufferAI, mCommandBuffers.data());
+	VkResult result = vkAllocateCommandBuffers(mLogicalDevice, &commandBufferAI, &buffer);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Command Buffer allocated." << std::endl;
 	} else {
 		throw std::runtime_error("Failed to allocate command buffer! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+void Renderer::FreeCommandBuffer(VkCommandBuffer buffer, VkCommandPool pool) {
+	vkFreeCommandBuffers(mLogicalDevice, pool, 1, &buffer); std::cout << "Success: Command Buffer freed." << std::endl;
+}
+
+void Renderer::AllocateGraphicsCommandBuffers() {
+	mCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (auto& buffer : mCommandBuffers) {
+		AllocateCommandBuffer(buffer, mGraphicsCommandPool);
 	}
 }
 void Renderer::RecordCommandBuffer(VkCommandBuffer buffer, uint32_t imageIndex) {
@@ -932,7 +941,7 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer buffer, uint32_t imageIndex) 
 
 			vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
 
-			VkBuffer vertexBuffers[] = { mVertexBuffer };
+			VkBuffer vertexBuffers[] = { mVertexBuffer->GetBuffer() };
 			VkDeviceSize offsets[] = { 0 };
 
 			vkCmdBindVertexBuffers(mCommandBuffers.at(mCurrentFrame), 0, 1, vertexBuffers, offsets);
@@ -947,7 +956,7 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer buffer, uint32_t imageIndex) 
 	}
 }
 void Renderer::FreeCommandBuffers(VkCommandPool pool) {
-	vkFreeCommandBuffers(mLogicalDevice, pool, (uint32_t)mCommandBuffers.size(), mCommandBuffers.data()); std::cout << "Success: Command Buffer freed." << std::endl;
+	vkFreeCommandBuffers(mLogicalDevice, pool, (uint32_t)mCommandBuffers.size(), mCommandBuffers.data()); std::cout << "Success: Command Buffers freed." << std::endl;
 }
 
 void Renderer::CreateSyncObjects() {
@@ -997,50 +1006,83 @@ void Renderer::DestroySyncObjects() {
 	}
 }
 
+void Renderer::CopyBuffer(Buffer* srcBuffer, Buffer* dstBuffer, VkDeviceSize bufferSize) {
+	// Create Transfer Command Buffer
+	VkCommandBuffer transferCommandBuffer;
+	AllocateCommandBuffer(transferCommandBuffer, mTransferCommandPool);
+
+	// Begin Recording Transfer Command Buffer struct
+	VkCommandBufferBeginInfo commandBufferBI = {
+		VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,																						// sType
+		nullptr,																															// pNext
+		VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,																						// flags
+		nullptr																																// pInheritanceInfo
+	};
+
+	// Begin Recording Transfer Command Buffer
+	VkResult result = vkBeginCommandBuffer(transferCommandBuffer, &commandBufferBI);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to begin recording transfer command buffer! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	VkBufferCopy bufferCopy = {
+		0,																																// srcOffset
+		0,																																// dstOffset
+		bufferSize																														// size
+	};
+
+	vkCmdCopyBuffer(transferCommandBuffer, srcBuffer->GetBuffer(), dstBuffer->GetBuffer(), 1, &bufferCopy);
+
+	result = vkEndCommandBuffer(transferCommandBuffer);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to end recording transfer command buffer! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	// Submit Transfer Command Buffer struct
+	VkCommandBuffer buffer = transferCommandBuffer;
+	VkSubmitInfo submitInfo = {
+		VK_STRUCTURE_TYPE_SUBMIT_INFO,																										// sType
+		nullptr,																															// pNext
+		0,																																	// waitSemaphoreCount
+		nullptr,																															// pWaitSemaphores
+		nullptr,																															// pWaitDstStageMask
+		1,																																	// commandBufferCount
+		&buffer,																															// pCommandBuffers
+		0,																																	// signalSemaphoreCount
+		nullptr																																// pSignalSemaphores
+	};
+
+	// Submit Transfer Command Buffer
+	result = vkQueueSubmit(mTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to submit copy command to queue! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	// Wait for Transfer Queue to finish
+	result = vkQueueWaitIdle(mTransferQueue);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Data transferred." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to wait for transfer queue! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	// Free Transfer Command Buffer
+	FreeCommandBuffer(transferCommandBuffer, mTransferCommandPool);
+}
 void Renderer::CreateVertexBuffer() {
-	VkBufferCreateInfo bufferCI = {
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.size = sizeof(vertices[0]) * vertices.size(),
-		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 0,
-		.pQueueFamilyIndices = nullptr
-	};
+	VkDeviceSize size(sizeof(vertices[0]) * vertices.size());
 
-	VkResult result = vkCreateBuffer(mLogicalDevice, &bufferCI, nullptr, &mVertexBuffer);
-	if (result == VK_SUCCESS) {
-		std::cout << "Success: Buffer created!" << std::endl;
-	} else {
-		throw std::runtime_error("Failed to create Buffer! Error Code: " + NT_CHECK_RESULT(result));
-	}
+	Buffer* stagingBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(mLogicalDevice, mVertexBuffer, &memRequirements);
+	stagingBuffer->MapBufferMemory((void*)vertices.data(), size);
 
-	VkMemoryAllocateInfo memoryAI = {
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.pNext = nullptr,
-		.allocationSize = memRequirements.size,
-		.memoryTypeIndex = FindMemoryTypeIndex(mPhysicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-	};
+	mVertexBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	result = vkAllocateMemory(mLogicalDevice, &memoryAI, nullptr, &mVertexBufferMemory);
-	if (result == VK_SUCCESS) {
-		std::cout << "Success: Buffer Memory allocated!" << std::endl;
-	} else {
-		throw std::runtime_error("Failed to allocate Buffer Memory! Error Code: " + NT_CHECK_RESULT(result));
-	}
+	CopyBuffer(stagingBuffer, mVertexBuffer, size);
 
-	vkBindBufferMemory(mLogicalDevice, mVertexBuffer, mVertexBufferMemory, 0);
-
-	void* data;
-	vkMapMemory(mLogicalDevice, mVertexBufferMemory, 0, bufferCI.size, 0, &data);
-		memcpy(data, vertices.data(), (size_t)bufferCI.size);
-	vkUnmapMemory(mLogicalDevice, mVertexBufferMemory);
+	delete stagingBuffer;
 }
 void Renderer::DestroyVertexBuffer() {
-	vkDestroyBuffer(mLogicalDevice, mVertexBuffer, nullptr); std::cout << "Success: Buffer destroyed." << std::endl;
-	vkFreeMemory(mLogicalDevice, mVertexBufferMemory, nullptr); std::cout << "Success: Buffer Memory freed." << std::endl;
+	vkDestroyBuffer(mLogicalDevice, mVertexBuffer->GetBuffer(), nullptr); std::cout << "Success: Buffer destroyed." << std::endl;
+	vkFreeMemory(mLogicalDevice, mVertexBuffer->GetBufferMemory(), nullptr); std::cout << "Success: Buffer Memory freed." << std::endl;
 }

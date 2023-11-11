@@ -160,12 +160,14 @@
     <None Include="Resources\Shaders\simple.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\Buffer.h" />
     <ClInclude Include="Core\globals.h" />
     <ClInclude Include="Core\ImageView.h" />
     <ClInclude Include="Core\Renderer.h" />
     <ClInclude Include="Core\Shader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Buffer.cpp" />
     <ClCompile Include="Core\ImageView.cpp" />
     <ClCompile Include="Core\main.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
