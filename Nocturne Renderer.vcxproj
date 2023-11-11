@@ -160,16 +160,16 @@
     <None Include="Resources\Shaders\simple.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ImageView.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="Shader.cpp" />
+    <ClInclude Include="Core\globals.h" />
+    <ClInclude Include="Core\ImageView.h" />
+    <ClInclude Include="Core\Renderer.h" />
+    <ClInclude Include="Core\Shader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="globals.h" />
-    <ClInclude Include="ImageView.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Shader.h" />
+    <ClCompile Include="Core\ImageView.cpp" />
+    <ClCompile Include="Core\main.cpp" />
+    <ClCompile Include="Core\Renderer.cpp" />
+    <ClCompile Include="Core\Shader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
