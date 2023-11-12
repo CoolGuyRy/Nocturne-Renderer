@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vulkan/vulkan.h>
 
+class Renderer;
+
 class Buffer {
 public:
 	Buffer(VkPhysicalDevice, VkDevice, VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags);
@@ -23,5 +25,5 @@ private:
 	VkDevice mLogicalDevice;
 };
 
-void CopyBuffer(VkDevice mLogicalDevice, VkCommandPool pool, VkQueue transferQueue, Buffer* srcBuffer, Buffer* dstBuffer, VkDeviceSize bufferSize);
+void CopyBuffer(Renderer* renderer, Buffer* srcBuffer, Buffer* dstBuffer, VkDeviceSize);
 #endif

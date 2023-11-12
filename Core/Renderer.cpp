@@ -1006,69 +1006,6 @@ void Renderer::DestroySyncObjects() {
 	}
 }
 
-void Renderer::CopyBuffer(Buffer* srcBuffer, Buffer* dstBuffer, VkDeviceSize bufferSize) {
-	// Create Transfer Command Buffer
-	VkCommandBuffer transferCommandBuffer;
-	AllocateCommandBuffer(transferCommandBuffer, mTransferCommandPool);
-
-	// Begin Recording Transfer Command Buffer struct
-	VkCommandBufferBeginInfo commandBufferBI = {
-		VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,																						// sType
-		nullptr,																															// pNext
-		VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,																						// flags
-		nullptr																																// pInheritanceInfo
-	};
-
-	// Begin Recording Transfer Command Buffer
-	VkResult result = vkBeginCommandBuffer(transferCommandBuffer, &commandBufferBI);
-	if (result != VK_SUCCESS) {
-		throw std::runtime_error("Failed to begin recording transfer command buffer! Error Code: " + NT_CHECK_RESULT(result));
-	}
-
-	VkBufferCopy bufferCopy = {
-		0,																																// srcOffset
-		0,																																// dstOffset
-		bufferSize																														// size
-	};
-
-	vkCmdCopyBuffer(transferCommandBuffer, srcBuffer->GetBuffer(), dstBuffer->GetBuffer(), 1, &bufferCopy);
-
-	result = vkEndCommandBuffer(transferCommandBuffer);
-	if (result != VK_SUCCESS) {
-		throw std::runtime_error("Failed to end recording transfer command buffer! Error Code: " + NT_CHECK_RESULT(result));
-	}
-
-	// Submit Transfer Command Buffer struct
-	VkCommandBuffer buffer = transferCommandBuffer;
-	VkSubmitInfo submitInfo = {
-		VK_STRUCTURE_TYPE_SUBMIT_INFO,																										// sType
-		nullptr,																															// pNext
-		0,																																	// waitSemaphoreCount
-		nullptr,																															// pWaitSemaphores
-		nullptr,																															// pWaitDstStageMask
-		1,																																	// commandBufferCount
-		&buffer,																															// pCommandBuffers
-		0,																																	// signalSemaphoreCount
-		nullptr																																// pSignalSemaphores
-	};
-
-	// Submit Transfer Command Buffer
-	result = vkQueueSubmit(mTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	if (result != VK_SUCCESS) {
-		throw std::runtime_error("Failed to submit copy command to queue! Error Code: " + NT_CHECK_RESULT(result));
-	}
-
-	// Wait for Transfer Queue to finish
-	result = vkQueueWaitIdle(mTransferQueue);
-	if (result == VK_SUCCESS) {
-		std::cout << "Success: Data transferred." << std::endl;
-	} else {
-		throw std::runtime_error("Failed to wait for transfer queue! Error Code: " + NT_CHECK_RESULT(result));
-	}
-
-	// Free Transfer Command Buffer
-	FreeCommandBuffer(transferCommandBuffer, mTransferCommandPool);
-}
 void Renderer::CreateVertexBuffer() {
 	VkDeviceSize size(sizeof(vertices[0]) * vertices.size());
 
@@ -1078,7 +1015,7 @@ void Renderer::CreateVertexBuffer() {
 
 	mVertexBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	CopyBuffer(stagingBuffer, mVertexBuffer, size);
+	CopyBuffer(this, stagingBuffer, mVertexBuffer, size);
 
 	delete stagingBuffer;
 }

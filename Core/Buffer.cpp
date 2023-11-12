@@ -1,5 +1,6 @@
 #include "Buffer.h"
 #include "globals.h"
+#include "Renderer.h"
 
 Buffer::Buffer(VkPhysicalDevice pDevice, VkDevice lDevice, VkDeviceSize dSize, VkBufferUsageFlags uFlags, VkMemoryPropertyFlags pFlags) : mPhysicalDevice(pDevice), mLogicalDevice(lDevice) {
 	CreateBuffer(dSize, uFlags, pFlags);
@@ -64,24 +65,10 @@ void Buffer::CreateBuffer(VkDeviceSize dSize, VkBufferUsageFlags uFlags, VkMemor
 	// Bind Buffer Memory
 	vkBindBufferMemory(mLogicalDevice, mBuffer, mBufferMemory, 0);
 }
-
-void CopyBuffer(VkDevice mLogicalDevice, VkCommandPool pool, VkQueue transferQueue, Buffer* srcBuffer, Buffer* dstBuffer, VkDeviceSize bufferSize) {
+void CopyBuffer(Renderer* renderer, Buffer* srcBuffer, Buffer* dstBuffer, VkDeviceSize bufferSize) {
 	// Create Transfer Command Buffer
 	VkCommandBuffer transferCommandBuffer;
-	VkCommandBufferAllocateInfo commandBufferAI = {
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-		.pNext = nullptr,
-		.commandPool = pool,
-		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-		.commandBufferCount = 1
-	};
-
-	VkResult result = vkAllocateCommandBuffers(mLogicalDevice, &commandBufferAI, &transferCommandBuffer);
-	if (result == VK_SUCCESS) {
-		std::cout << "Success: Command Buffer allocated." << std::endl;
-	} else {
-		throw std::runtime_error("Failed to allocate command buffer! Error Code: " + NT_CHECK_RESULT(result));
-	}
+	renderer->AllocateCommandBuffer(transferCommandBuffer, renderer->mTransferCommandPool);
 
 	// Begin Recording Transfer Command Buffer struct
 	VkCommandBufferBeginInfo commandBufferBI = {
@@ -92,7 +79,7 @@ void CopyBuffer(VkDevice mLogicalDevice, VkCommandPool pool, VkQueue transferQue
 	};
 
 	// Begin Recording Transfer Command Buffer
-	result = vkBeginCommandBuffer(transferCommandBuffer, &commandBufferBI);
+	VkResult result = vkBeginCommandBuffer(transferCommandBuffer, &commandBufferBI);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to begin recording transfer command buffer! Error Code: " + NT_CHECK_RESULT(result));
 	}
@@ -125,13 +112,13 @@ void CopyBuffer(VkDevice mLogicalDevice, VkCommandPool pool, VkQueue transferQue
 	};
 
 	// Submit Transfer Command Buffer
-	result = vkQueueSubmit(transferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	result = vkQueueSubmit(renderer->mTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Failed to submit copy command to queue! Error Code: " + NT_CHECK_RESULT(result));
 	}
 
 	// Wait for Transfer Queue to finish
-	result = vkQueueWaitIdle(transferQueue);
+	result = vkQueueWaitIdle(renderer->mTransferQueue);
 	if (result == VK_SUCCESS) {
 		std::cout << "Success: Data transferred." << std::endl;
 	} else {
@@ -139,5 +126,5 @@ void CopyBuffer(VkDevice mLogicalDevice, VkCommandPool pool, VkQueue transferQue
 	}
 
 	// Free Transfer Command Buffer
-	vkFreeCommandBuffers(mLogicalDevice, pool, 1, &buffer);
+	renderer->FreeCommandBuffer(transferCommandBuffer, renderer->mTransferCommandPool);
 }
