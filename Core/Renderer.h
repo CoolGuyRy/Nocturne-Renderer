@@ -47,6 +47,12 @@ public:
 	}
 };
 
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
 class Renderer {
 public:
 	Renderer();
@@ -55,9 +61,13 @@ public:
 	void Run();
 	// Top-Level Resources (Textures, Models, etc)
 	const std::vector<Vertex> vertices = {
-		{{ 0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{ 0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{-0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}}
+		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+		{{ 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+		{{ 0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{-0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}}
+	};
+	const std::vector<uint16_t> indices = {
+		0, 1, 2, 2, 3, 0
 	};
 
 	// Run() Support Functions
@@ -170,5 +180,30 @@ public:
 	Buffer* mVertexBuffer;
 	void CreateVertexBuffer();
 	void DestroyVertexBuffer();
+
+	Buffer* mIndexBuffer;
+	void CreateIndexBuffer();
+	void DestroyIndexBuffer();
+
+	// Descriptor Members / Functions
+	VkDescriptorSetLayout mDescriptorSetLayout;
+	void CreateDescriptorSetLayout();
+	void DestroyDescriptorSetLayout();
+
+	// Uniform Buffers Members / Functions
+	std::vector<Buffer*> mUniformBuffers;
+	std::vector<void*> mUniformBufferData;
+	void CreateUniformBuffers();
+	void DestroyUniformBuffers();
+	void UpdateUniformBuffer(uint32_t);
+
+	// Descriptor Pool Members / Functions
+	VkDescriptorPool mDescriptorPool;
+	void CreateDescriptorPool();
+	void DestroyDescriptorPool();
+
+	// Descriptor Set Members / Functions
+	std::vector<VkDescriptorSet> mDescriptorSets;
+	void CreateDescriptorSets();
 };
 #endif

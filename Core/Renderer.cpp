@@ -2,6 +2,10 @@
 
 #include <iostream>
 #include <Windows.h>
+#include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/hash.hpp>
 #include "globals.h"
 
 Renderer::Renderer() {
@@ -12,11 +16,16 @@ Renderer::Renderer() {
 	CreateLogicalDevice();
 	CreateSwapchain();
 	CreateRenderPass();
+	CreateDescriptorSetLayout();
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
 	CreateCommandPool(mGraphicsCommandPool, mQueueFamilyIndices.mGraphics);
 	CreateCommandPool(mTransferCommandPool, mQueueFamilyIndices.mTransfer);
 	CreateVertexBuffer();
+	CreateIndexBuffer();
+	CreateUniformBuffers();
+	CreateDescriptorPool();
+	CreateDescriptorSets();
 	AllocateGraphicsCommandBuffers();
 	CreateSyncObjects();
 }
@@ -25,11 +34,15 @@ Renderer::~Renderer() {
 	// Delete in reverse order
 	DestroySyncObjects();
 	FreeCommandBuffers(mGraphicsCommandPool);
+	DestroyDescriptorPool();
+	DestroyUniformBuffers();
+	DestroyIndexBuffer();
 	DestroyVertexBuffer();
 	DestroyCommandPool(mTransferCommandPool);
 	DestroyCommandPool(mGraphicsCommandPool);
 	DestroyFrameBuffers();
 	DestroyGraphicsPipeline();
+	DestroyDescriptorSetLayout();
 	DestroyRenderPass();
 	DestroySwapchain();
 	DestroyLogicalDevice();
@@ -65,6 +78,8 @@ void Renderer::Render() {
 
 	vkResetCommandBuffer(mCommandBuffers.at(mCurrentFrame), 0);
 	RecordCommandBuffer(mCommandBuffers.at(mCurrentFrame), imageIndex);
+
+	UpdateUniformBuffer(mCurrentFrame);
 
 	std::vector<VkPipelineStageFlags> waitStages = {
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
@@ -718,7 +733,7 @@ void Renderer::CreateGraphicsPipeline() {
 		.rasterizerDiscardEnable = VK_FALSE,
 		.polygonMode = VK_POLYGON_MODE_FILL,
 		.cullMode = VK_CULL_MODE_BACK_BIT,
-		.frontFace = VK_FRONT_FACE_CLOCKWISE,
+		.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
 		.depthBiasEnable = VK_FALSE,
 		.depthBiasConstantFactor = 0.0f,
 		.depthBiasClamp = 0.0f,
@@ -772,8 +787,8 @@ void Renderer::CreateGraphicsPipeline() {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.setLayoutCount = 0,
-		.pSetLayouts = nullptr,
+		.setLayoutCount = 1,
+		.pSetLayouts = &mDescriptorSetLayout,
 		.pushConstantRangeCount = 0,
 		.pPushConstantRanges = nullptr
 	};
@@ -946,7 +961,11 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer buffer, uint32_t imageIndex) 
 
 			vkCmdBindVertexBuffers(mCommandBuffers.at(mCurrentFrame), 0, 1, vertexBuffers, offsets);
 
-			vkCmdDraw(buffer, (uint32_t)vertices.size(), 1, 0, 0);
+			vkCmdBindIndexBuffer(mCommandBuffers.at(mCurrentFrame), mIndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
+			vkCmdBindDescriptorSets(mCommandBuffers.at(mCurrentFrame), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSets.at(mCurrentFrame), 0, nullptr);
+
+			vkCmdDrawIndexed(mCommandBuffers.at(mCurrentFrame), (uint32_t)indices.size(), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(buffer);
 
@@ -1007,19 +1026,166 @@ void Renderer::DestroySyncObjects() {
 }
 
 void Renderer::CreateVertexBuffer() {
-	VkDeviceSize size(sizeof(vertices[0]) * vertices.size());
+	VkDeviceSize bufferSize(sizeof(vertices[0]) * vertices.size());
 
-	Buffer* stagingBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	Buffer* stagingBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-	stagingBuffer->MapBufferMemory((void*)vertices.data(), size);
+	stagingBuffer->MapBufferMemory((void*)vertices.data(), bufferSize);
 
-	mVertexBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	mVertexBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	CopyBuffer(this, stagingBuffer, mVertexBuffer, size);
+	CopyBuffer(this, stagingBuffer, mVertexBuffer, bufferSize);
 
 	delete stagingBuffer;
 }
 void Renderer::DestroyVertexBuffer() {
-	vkDestroyBuffer(mLogicalDevice, mVertexBuffer->GetBuffer(), nullptr); std::cout << "Success: Buffer destroyed." << std::endl;
-	vkFreeMemory(mLogicalDevice, mVertexBuffer->GetBufferMemory(), nullptr); std::cout << "Success: Buffer Memory freed." << std::endl;
+	delete mVertexBuffer;
+}
+
+void Renderer::CreateIndexBuffer() {
+	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+	Buffer* stagingBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	stagingBuffer->MapBufferMemory((void*)indices.data(), bufferSize);
+
+	mIndexBuffer = new Buffer(mPhysicalDevice, mLogicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+	CopyBuffer(this, stagingBuffer, mIndexBuffer, bufferSize);
+
+	delete stagingBuffer;
+}
+void Renderer::DestroyIndexBuffer() {
+	delete mIndexBuffer;
+}
+
+void Renderer::CreateDescriptorSetLayout() {
+	VkDescriptorSetLayoutBinding uboLayoutBinding = {
+		.binding = 0,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+		.pImmutableSamplers = nullptr
+	};
+
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.bindingCount = 1,
+		.pBindings = &uboLayoutBinding
+	};
+
+	VkResult result = vkCreateDescriptorSetLayout(mLogicalDevice, &descriptorSetLayoutCI, nullptr, &mDescriptorSetLayout);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Descriptor Set Layout created." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create Descriptor Set Layout! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+void Renderer::DestroyDescriptorSetLayout() {
+	vkDestroyDescriptorSetLayout(mLogicalDevice, mDescriptorSetLayout, nullptr); std::cout << "Success: Descriptor Set Layout destroyed." << std::endl;
+}
+
+void Renderer::CreateUniformBuffers() {
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+	mUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	mUniformBufferData.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		mUniformBuffers.at(i) = new Buffer(mPhysicalDevice, mLogicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	
+		vkMapMemory(mLogicalDevice, mUniformBuffers.at(i)->GetBufferMemory(), 0, bufferSize, 0, &mUniformBufferData.at(i));
+	}
+}
+void Renderer::DestroyUniformBuffers() {
+	for (auto buffer : mUniformBuffers) {
+		delete buffer;
+	}
+}
+void Renderer::UpdateUniformBuffer(uint32_t currentFrame) {
+	static auto startTime = std::chrono::high_resolution_clock::now();
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+	UniformBufferObject ubo = {
+		.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+		.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+		.proj = glm::perspective(glm::radians(45.0f), mSwapchainExtent.width / (float)mSwapchainExtent.height, 0.1f, 10.0f)
+	};
+	ubo.proj[1][1] *= -1;
+
+	memcpy(mUniformBufferData.at(currentFrame), &ubo, sizeof(ubo));
+}
+
+void Renderer::CreateDescriptorPool() {
+	VkDescriptorPoolSize poolSize = {
+		.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorCount = (uint32_t)MAX_FRAMES_IN_FLIGHT
+	};
+
+	VkDescriptorPoolCreateInfo poolCI = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.maxSets = (uint32_t)MAX_FRAMES_IN_FLIGHT,
+		.poolSizeCount = 1,
+		.pPoolSizes = &poolSize
+	};
+
+	VkResult result = vkCreateDescriptorPool(mLogicalDevice, &poolCI, nullptr, &mDescriptorPool);
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Descriptor Pool created!" << std::endl;
+	} else {
+		throw std::runtime_error("Failed to create Descriptor Pool! Error Code: " + NT_CHECK_RESULT(result));
+	}
+}
+void Renderer::DestroyDescriptorPool() {
+	vkDestroyDescriptorPool(mLogicalDevice, mDescriptorPool, nullptr); std::cout << "Success: Descriptor Pool destroyed." << std::endl;
+}
+
+void Renderer::CreateDescriptorSets() {
+	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, mDescriptorSetLayout);
+
+	VkDescriptorSetAllocateInfo descriptorSetAI = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.descriptorPool = mDescriptorPool,
+		.descriptorSetCount = (uint32_t)MAX_FRAMES_IN_FLIGHT,
+		.pSetLayouts = layouts.data()
+	};
+
+	mDescriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+
+	VkResult result = vkAllocateDescriptorSets(mLogicalDevice, &descriptorSetAI, mDescriptorSets.data());
+	if (result == VK_SUCCESS) {
+		std::cout << "Success: Descriptor Set allocated." << std::endl;
+	} else {
+		throw std::runtime_error("Failed to allocate Descriptor Set! Error Code: " + NT_CHECK_RESULT(result));
+	}
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		VkDescriptorBufferInfo descriptorBI = {
+			.buffer = mUniformBuffers.at(i)->GetBuffer(),
+			.offset = 0,
+			.range = sizeof(UniformBufferObject)
+		};
+
+		VkWriteDescriptorSet descriptorWrite = {
+			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+			.pNext = nullptr,
+			.dstSet = mDescriptorSets.at(i),
+			.dstBinding = 0,
+			.dstArrayElement = 0,
+			.descriptorCount = 1,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.pImageInfo = nullptr,
+			.pBufferInfo = &descriptorBI,
+			.pTexelBufferView = nullptr
+		};
+
+		vkUpdateDescriptorSets(mLogicalDevice, 1, &descriptorWrite, 0, nullptr);
+	}
 }
